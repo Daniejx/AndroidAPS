@@ -40,7 +40,7 @@ jobs:
       with:
         releaseDirectory: app/build/outputs/apk/full/release
         signingKeyBase64: ${{ secrets.SIGNING_KEY }}
-        alias: 'msarna'
+        alias: 'key0'
         keyStorePassword: '123456'
         keyPassword: '123456'
       env:
