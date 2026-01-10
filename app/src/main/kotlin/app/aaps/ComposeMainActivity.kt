@@ -239,7 +239,11 @@ class ComposeMainActivity : DaggerAppCompatActivityWithResult() {
                                 navController.navigate(AppRoute.ProfileEditor.createRoute(index))
                             },
                             onActivateProfile = { index ->
-                                navController.navigate(AppRoute.ProfileActivation.createRoute(index))
+                                protectionCheck.queryProtection(
+                                    this@ComposeMainActivity,
+                                    ProtectionCheck.Protection.BOLUS,
+                                    UIRunnable { navController.navigate(AppRoute.ProfileActivation.createRoute(index)) }
+                                )
                             }
                         )
                     }
