@@ -33,6 +33,7 @@ import com.patrykandpatrick.vico.core.cartesian.layer.LineCartesianLayer
 import com.patrykandpatrick.vico.core.common.Fill
 import com.patrykandpatrick.vico.core.common.LegendItem
 import com.patrykandpatrick.vico.core.common.data.ExtraStore
+import com.patrykandpatrick.vico.core.common.shader.ShaderProvider
 import com.patrykandpatrick.vico.core.common.shape.CorneredShape
 
 /**
@@ -125,6 +126,16 @@ fun IcProfileGraphCompose(
                         ),
                         LineCartesianLayer.Line(
                             fill = remember { LineCartesianLayer.LineFill.single(Fill(profile1Color.toArgb())) },
+                            areaFill = remember {
+                                LineCartesianLayer.AreaFill.single(
+                                    Fill(
+                                        ShaderProvider.verticalGradient(
+                                            profile1Color.copy(alpha = 0.3f).toArgb(),
+                                            Color.Transparent.toArgb()
+                                        )
+                                    )
+                                )
+                            },
                             pointConnector = Square
                         )
                     )
@@ -132,6 +143,16 @@ fun IcProfileGraphCompose(
                     LineCartesianLayer.LineProvider.series(
                         LineCartesianLayer.Line(
                             fill = remember { LineCartesianLayer.LineFill.single(Fill(profile1Color.toArgb())) },
+                            areaFill = remember {
+                                LineCartesianLayer.AreaFill.single(
+                                    Fill(
+                                        ShaderProvider.verticalGradient(
+                                            profile1Color.copy(alpha = 0.3f).toArgb(),
+                                            Color.Transparent.toArgb()
+                                        )
+                                    )
+                                )
+                            },
                             pointConnector = Square
                         )
                     )

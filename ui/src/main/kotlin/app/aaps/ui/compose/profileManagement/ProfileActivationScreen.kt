@@ -12,8 +12,9 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Switch
 import androidx.compose.material3.FilledTonalButton
@@ -34,7 +35,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import app.aaps.core.data.configuration.Constants
 import app.aaps.core.interfaces.resources.ResourceHelper
@@ -152,6 +152,22 @@ fun ProfileActivationScreen(
                             contentDescription = stringResource(app.aaps.core.ui.R.string.back)
                         )
                     }
+                },
+                actions = {
+                    Button(
+                        onClick = { showConfirmDialog = true },
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.primaryContainer,
+                            contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                        )
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.PlayArrow,
+                            contentDescription = null,
+                            modifier = Modifier.padding(end = 4.dp)
+                        )
+                        Text(stringResource(R.string.activate_label))
+                    }
                 }
             )
         }
@@ -218,10 +234,10 @@ fun ProfileActivationScreen(
                 }
             }
 
-            HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
-
             // Temporary Target switch (only when duration > 0 and percentage < 100)
             if (showTTOption) {
+                HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -257,24 +273,6 @@ fun ProfileActivationScreen(
                     singleLine = false,
                     minLines = 2,
                     maxLines = 4
-                )
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Activate button
-            Button(
-                onClick = { showConfirmDialog = true },
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Icon(
-                    imageVector = Icons.Filled.Check,
-                    contentDescription = null,
-                    modifier = Modifier.padding(end = 8.dp)
-                )
-                Text(
-                    text = stringResource(R.string.activate_label),
-                    fontWeight = FontWeight.Bold
                 )
             }
 
