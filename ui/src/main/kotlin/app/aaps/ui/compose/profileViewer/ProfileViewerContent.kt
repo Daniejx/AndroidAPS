@@ -520,7 +520,7 @@ fun ProfileRow(label: String, value: String, showColon: Boolean = true) {
             }
         }
 
-        // Values - either 2 columns or single column
+        // Values - either 2 columns or single column, both centered
         if (useColumns) {
             val midPoint = (lines.size + 1) / 2
             val leftColumn = lines.take(midPoint)
@@ -553,10 +553,17 @@ fun ProfileRow(label: String, value: String, showColon: Boolean = true) {
                 }
             }
         } else {
-            Text(
-                text = value,
-                style = MaterialTheme.typography.bodySmall
-            )
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                lines.forEach { line ->
+                    Text(
+                        text = line,
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                }
+            }
         }
     }
 }

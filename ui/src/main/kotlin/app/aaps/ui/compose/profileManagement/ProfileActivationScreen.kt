@@ -1,5 +1,6 @@
 package app.aaps.ui.compose.profileManagement
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -12,35 +13,49 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.outlined.Schedule
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.DatePicker
+import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Switch
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TimePicker
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.rememberDatePickerState
+import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableDoubleStateOf
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import app.aaps.core.data.configuration.Constants
 import app.aaps.core.interfaces.resources.ResourceHelper
+import app.aaps.core.interfaces.utils.DateUtil
 import app.aaps.core.ui.compose.NumberInputRow
 import app.aaps.core.ui.compose.OkCancelDialog
+import app.aaps.core.ui.compose.TimePickerDialog
 import app.aaps.ui.R
+import java.util.Calendar
 
 /**
  * Full screen for activating a profile with optional percentage, timeshift, and duration.
@@ -50,9 +65,11 @@ import app.aaps.ui.R
  * @param currentTimeshiftHours Current active timeshift in hours (for reuse button)
  * @param hasReuseValues Whether reuse button should be shown
  * @param showNotesField Whether to show the notes input field (based on BooleanKey.OverviewShowNotesInDialogs)
+ * @param initialTimestamp Initial timestamp (defaults to now)
+ * @param dateUtil DateUtil for formatting dates/times
  * @param rh ResourceHelper for string resources
  * @param onNavigateBack Callback to navigate back
- * @param onActivate Callback when profile is activated with (duration, percentage, timeshift, withTT, notes)
+ * @param onActivate Callback when profile is activated with (duration, percentage, timeshift, withTT, notes, timestamp, timeChanged)
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -62,9 +79,11 @@ fun ProfileActivationScreen(
     currentTimeshiftHours: Int = 0,
     hasReuseValues: Boolean = false,
     showNotesField: Boolean = true,
+    initialTimestamp: Long,
+    dateUtil: DateUtil,
     rh: ResourceHelper,
     onNavigateBack: () -> Unit,
-    onActivate: (durationMinutes: Int, percentage: Int, timeshiftHours: Int, withTT: Boolean, notes: String) -> Unit
+    onActivate: (durationMinutes: Int, percentage: Int, timeshiftHours: Int, withTT: Boolean, notes: String, timestamp: Long, timeChanged: Boolean) -> Unit
 ) {
     var duration by remember { mutableDoubleStateOf(0.0) }
     var percentage by remember { mutableDoubleStateOf(100.0) }
@@ -73,8 +92,25 @@ fun ProfileActivationScreen(
     var notes by remember { mutableStateOf("") }
     var showConfirmDialog by remember { mutableStateOf(false) }
 
+    // Date/time state
+    val originalTimestamp = remember { initialTimestamp }
+    var eventTime by remember { mutableLongStateOf(initialTimestamp) }
+    val eventTimeChanged = eventTime != originalTimestamp
+    var showDatePicker by remember { mutableStateOf(false) }
+    var showTimePicker by remember { mutableStateOf(false) }
+
     // TT option only visible when duration > 0 and percentage < 100
     val showTTOption = duration > 0 && percentage < 100
+
+    // Format duration as "Xh Ym" when >= 60 minutes
+    val durationMinutes = duration.toInt()
+    val formattedDuration = if (durationMinutes >= 60) {
+        val hours = durationMinutes / 60
+        val mins = durationMinutes % 60
+        rh.gs(app.aaps.core.ui.R.string.format_hour_minute, hours, mins)
+    } else {
+        rh.gs(app.aaps.core.ui.R.string.format_mins, durationMinutes)
+    }
 
     // Build confirmation message
     val confirmationMessage = buildString {
@@ -85,7 +121,7 @@ fun ProfileActivationScreen(
             append("<br/>")
             append(rh.gs(app.aaps.core.ui.R.string.duration))
             append(": ")
-            append(rh.gs(app.aaps.core.ui.R.string.format_mins, duration.toInt()))
+            append(formattedDuration)
         }
         if (percentage.toInt() != 100) {
             append("<br/>")
@@ -111,6 +147,60 @@ fun ProfileActivationScreen(
             append(": ")
             append(notes)
         }
+        if (eventTimeChanged) {
+            append("<br/>")
+            append(rh.gs(app.aaps.core.ui.R.string.time))
+            append(": ")
+            append(dateUtil.dateAndTimeString(eventTime))
+        }
+    }
+
+    // Date picker dialog
+    if (showDatePicker) {
+        val calendar = Calendar.getInstance().apply { timeInMillis = eventTime }
+        val datePickerState = rememberDatePickerState(
+            initialSelectedDateMillis = dateUtil.timeStampToUtcDateMillis(eventTime)
+        )
+        DatePickerDialog(
+            onDismissRequest = { showDatePicker = false },
+            confirmButton = {
+                TextButton(onClick = {
+                    datePickerState.selectedDateMillis?.let { selectedMillis ->
+                        eventTime = dateUtil.mergeUtcDateToTimestamp(eventTime, selectedMillis)
+                    }
+                    showDatePicker = false
+                }) {
+                    Text(stringResource(android.R.string.ok))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDatePicker = false }) {
+                    Text(stringResource(android.R.string.cancel))
+                }
+            }
+        ) {
+            DatePicker(state = datePickerState)
+        }
+    }
+
+    // Time picker dialog
+    if (showTimePicker) {
+        val context = LocalContext.current
+        val calendar = Calendar.getInstance().apply { timeInMillis = eventTime }
+        val timePickerState = rememberTimePickerState(
+            initialHour = calendar.get(Calendar.HOUR_OF_DAY),
+            initialMinute = calendar.get(Calendar.MINUTE),
+            is24Hour = android.text.format.DateFormat.is24HourFormat(context)
+        )
+        TimePickerDialog(
+            onDismissRequest = { showTimePicker = false },
+            onConfirm = {
+                eventTime = dateUtil.mergeHourMinuteToTimestamp(eventTime, timePickerState.hour, timePickerState.minute, true)
+                showTimePicker = false
+            }
+        ) {
+            TimePicker(state = timePickerState)
+        }
     }
 
     // Confirmation dialog
@@ -125,7 +215,9 @@ fun ProfileActivationScreen(
                     percentage.toInt(),
                     timeshift.toInt(),
                     showTTOption && withTT,
-                    notes
+                    notes,
+                    eventTime,
+                    eventTimeChanged
                 )
             },
             onDismiss = { showConfirmDialog = false }
@@ -181,6 +273,62 @@ fun ProfileActivationScreen(
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             Spacer(modifier = Modifier.height(8.dp))
+
+            // Date/Time selection row
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                // Date field
+                OutlinedTextField(
+                    value = dateUtil.dateString(eventTime),
+                    onValueChange = {},
+                    readOnly = true,
+                    enabled = false,
+                    label = { Text(stringResource(app.aaps.core.ui.R.string.date)) },
+                    trailingIcon = {
+                        Icon(
+                            imageVector = Icons.Filled.DateRange,
+                            contentDescription = null,
+                            tint = if (eventTimeChanged) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    },
+                    colors = OutlinedTextFieldDefaults.colors(
+                        disabledTextColor = MaterialTheme.colorScheme.onSurface,
+                        disabledBorderColor = MaterialTheme.colorScheme.outline,
+                        disabledLabelColor = MaterialTheme.colorScheme.onSurfaceVariant
+                    ),
+                    modifier = Modifier
+                        .weight(1f)
+                        .clickable { showDatePicker = true },
+                    singleLine = true
+                )
+
+                // Time field
+                OutlinedTextField(
+                    value = dateUtil.timeString(eventTime),
+                    onValueChange = {},
+                    readOnly = true,
+                    enabled = false,
+                    label = { Text(stringResource(app.aaps.core.ui.R.string.time)) },
+                    trailingIcon = {
+                        Icon(
+                            imageVector = Icons.Outlined.Schedule,
+                            contentDescription = null,
+                            tint = if (eventTimeChanged) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    },
+                    colors = OutlinedTextFieldDefaults.colors(
+                        disabledTextColor = MaterialTheme.colorScheme.onSurface,
+                        disabledBorderColor = MaterialTheme.colorScheme.outline,
+                        disabledLabelColor = MaterialTheme.colorScheme.onSurfaceVariant
+                    ),
+                    modifier = Modifier
+                        .weight(1f)
+                        .clickable { showTimePicker = true },
+                    singleLine = true
+                )
+            }
 
             // Duration input - automatically formats as "Xh Ym" when >= 60
             NumberInputRow(

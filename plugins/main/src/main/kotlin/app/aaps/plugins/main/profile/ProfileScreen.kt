@@ -20,7 +20,6 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CardDefaults
@@ -70,8 +69,7 @@ import java.text.DecimalFormat
 @Composable
 fun ProfileEditorScreen(
     viewModel: ProfileEditorViewModel,
-    onBackClick: () -> Unit,
-    onActivateProfile: (profileName: String) -> Unit = {}
+    onBackClick: () -> Unit
 ) {
     val state by viewModel.uiState.collectAsState()
 
@@ -145,20 +143,6 @@ fun ProfileEditorScreen(
                                 Icons.Default.Check,
                                 contentDescription = stringResource(app.aaps.core.ui.R.string.save)
                             )
-                        }
-                    } else if (state.isValid) {
-                        // Activate profile button (when not edited and valid)
-                        FilledTonalButton(
-                            onClick = { state.currentProfile?.name?.let { onActivateProfile(it) } },
-                            contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 16.dp, vertical = 8.dp)
-                        ) {
-                            Icon(
-                                Icons.Default.PlayArrow,
-                                contentDescription = null,
-                                modifier = Modifier.size(18.dp)
-                            )
-                            Spacer(Modifier.width(6.dp))
-                            Text(stringResource(app.aaps.core.ui.R.string.activate_profile))
                         }
                     }
                     Spacer(Modifier.width(8.dp))

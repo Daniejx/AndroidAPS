@@ -266,16 +266,20 @@ class ComposeMainActivity : DaggerAppCompatActivityWithResult() {
                             currentTimeshiftHours = reuseValues?.second ?: 0,
                             hasReuseValues = reuseValues != null,
                             showNotesField = preferences.get(BooleanKey.OverviewShowNotesInDialogs),
+                            initialTimestamp = profileManagementViewModel.dateUtil.nowWithoutMilliseconds(),
+                            dateUtil = profileManagementViewModel.dateUtil,
                             rh = rh,
                             onNavigateBack = { navController.popBackStack() },
-                            onActivate = { duration, percentage, timeshift, withTT, notes ->
+                            onActivate = { duration, percentage, timeshift, withTT, notes, timestamp, timeChanged ->
                                 val success = profileManagementViewModel.activateProfile(
                                     profileIndex = profileIndex,
                                     durationMinutes = duration,
                                     percentage = percentage,
                                     timeshiftHours = timeshift,
                                     withTT = withTT,
-                                    notes = notes
+                                    notes = notes,
+                                    timestamp = timestamp,
+                                    timeChanged = timeChanged
                                 )
                                 if (success) {
                                     navController.popBackStack(AppRoute.Profile.route, inclusive = false)
@@ -296,10 +300,7 @@ class ComposeMainActivity : DaggerAppCompatActivityWithResult() {
                         profileEditorViewModel.selectProfile(profileIndex)
                         ProfileEditorScreen(
                             viewModel = profileEditorViewModel,
-                            onBackClick = { navController.popBackStack() },
-                            onActivateProfile = { profileName ->
-                                uiInteraction.runProfileSwitchDialog(supportFragmentManager, profileName)
-                            }
+                            onBackClick = { navController.popBackStack() }
                         )
                     }
 

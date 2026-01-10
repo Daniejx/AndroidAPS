@@ -245,3 +245,33 @@ fun ErrorDialog(
         properties = DialogProperties(dismissOnBackPress = true, dismissOnClickOutside = true)
     )
 }
+
+/**
+ * A dialog for time picker with confirm and dismiss buttons.
+ *
+ * @param onDismissRequest Called when dialog is dismissed
+ * @param onConfirm Called when confirm button is clicked
+ * @param content The time picker content to display
+ */
+@Composable
+fun TimePickerDialog(
+    onDismissRequest: () -> Unit,
+    onConfirm: () -> Unit,
+    content: @Composable () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismissRequest,
+        text = { content() },
+        confirmButton = {
+            TextButton(onClick = onConfirm) {
+                Text(stringResource(R.string.ok))
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismissRequest) {
+                Text(stringResource(R.string.cancel))
+            }
+        },
+        properties = DialogProperties(dismissOnBackPress = true, dismissOnClickOutside = true)
+    )
+}

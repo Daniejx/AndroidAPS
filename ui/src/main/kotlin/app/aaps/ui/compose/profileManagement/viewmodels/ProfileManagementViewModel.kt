@@ -2,6 +2,7 @@ package app.aaps.ui.compose.profileManagement.viewmodels
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import app.aaps.core.data.model.EPS
 import app.aaps.core.data.model.GlucoseUnit
 import app.aaps.core.data.model.PS
 import app.aaps.core.data.model.TT
@@ -23,10 +24,12 @@ import app.aaps.core.interfaces.profile.ProfileValidationError
 import app.aaps.core.interfaces.profile.PureProfile
 import app.aaps.core.interfaces.resources.ResourceHelper
 import app.aaps.core.interfaces.utils.HardLimits
+import app.aaps.core.keys.BooleanNonKey
 import app.aaps.core.keys.interfaces.Preferences
 import app.aaps.core.keys.UnitDoubleKey
 import app.aaps.core.interfaces.rx.AapsSchedulers
 import app.aaps.core.interfaces.rx.bus.RxBus
+import app.aaps.core.interfaces.db.observeChanges
 import app.aaps.core.interfaces.rx.events.EventLocalProfileChanged
 import app.aaps.core.interfaces.rx.events.EventProfileStoreChanged
 import app.aaps.core.interfaces.utils.DateUtil
@@ -39,6 +42,8 @@ import io.reactivex.rxjava3.kotlin.plusAssign
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.json.JSONObject
@@ -100,6 +105,14 @@ class ProfileManagementViewModel @Inject constructor(
                     } else null
                 }
 
+                // Get the profile that will be active after current one ends
+                val nextProfileName = activeProfileSwitch?.let { ps ->
+                    if (ps.duration > 0) {
+                        val afterEnd = ps.end + 1
+                        persistenceLayer.getProfileSwitchActiveAt(afterEnd)?.profileName
+                    } else null
+                }
+
                 // Calculate basal sum for each profile
                 val basalSums = profiles.map { singleProfile ->
                     toPureProfile(singleProfile)?.let { pureProfile ->
@@ -130,6 +143,7 @@ class ProfileManagementViewModel @Inject constructor(
                         currentProfileIndex = currentIndex,
                         activeProfileName = activeProfileName,
                         activeProfileSwitch = activeProfileSwitch,
+                        nextProfileName = nextProfileName,
                         remainingTimeMs = remainingTime,
                         basalSums = basalSums,
                         profileErrors = profileErrors,
@@ -176,6 +190,11 @@ class ProfileManagementViewModel @Inject constructor(
             .toObservable(EventProfileStoreChanged::class.java)
             .observeOn(aapsSchedulers.main)
             .subscribe({ loadData() }, { aapsLogger.error(LTag.UI, "Error observing profile store changes", it) })
+
+        // Observe effective profile switch changes via PersistenceLayer flow
+        persistenceLayer.observeChanges<EPS>()
+            .onEach { loadData() }
+            .launchIn(viewModelScope)
     }
 
     /**
@@ -273,6 +292,8 @@ class ProfileManagementViewModel @Inject constructor(
      * @param timeshiftHours Timeshift in hours (0 = no change)
      * @param withTT Whether to create an Activity TT
      * @param notes Optional notes
+     * @param timestamp Timestamp for the profile switch (defaults to now)
+     * @param timeChanged Whether the user modified the time from the default
      * @return true if activation was successful
      */
     fun activateProfile(
@@ -281,7 +302,9 @@ class ProfileManagementViewModel @Inject constructor(
         percentage: Int,
         timeshiftHours: Int,
         withTT: Boolean,
-        notes: String
+        notes: String,
+        timestamp: Long = dateUtil.now(),
+        timeChanged: Boolean = false
     ): Boolean {
         val profiles = uiState.value.profiles
         if (profileIndex !in profiles.indices) {
@@ -317,7 +340,6 @@ class ProfileManagementViewModel @Inject constructor(
             return false
         }
 
-        val timestamp = dateUtil.now()
         val success = profileFunction.createProfileSwitch(
             profileStore = profileStore,
             profileName = profileName,
@@ -329,6 +351,7 @@ class ProfileManagementViewModel @Inject constructor(
             source = Sources.ProfileSwitchDialog,
             note = notes.ifBlank { null },
             listValues = listOfNotNull(
+                ValueWithUnit.Timestamp(timestamp).takeIf { timeChanged },
                 ValueWithUnit.SimpleString(profileName),
                 ValueWithUnit.Percent(percentage),
                 ValueWithUnit.Hour(timeshiftHours).takeIf { timeshiftHours != 0 },
@@ -336,32 +359,38 @@ class ProfileManagementViewModel @Inject constructor(
             )
         )
 
-        if (success && withTT && durationMinutes > 0 && percentage < 100) {
-            // Create Activity TT
-            val target = preferences.get(UnitDoubleKey.OverviewActivityTarget)
-            val units = profileFunction.getUnits()
-            viewModelScope.launch {
-                persistenceLayer.insertAndCancelCurrentTemporaryTarget(
-                    TT(
-                        timestamp = timestamp + 10000, // Add ten secs for proper NSCv1 sync
-                        duration = TimeUnit.MINUTES.toMillis(durationMinutes.toLong()),
-                        reason = TT.Reason.ACTIVITY,
-                        lowTarget = profileUtil.convertToMgdl(target, units),
-                        highTarget = profileUtil.convertToMgdl(target, units)
-                    ),
-                    action = Action.TT,
-                    source = Sources.TTDialog,
-                    note = null,
-                    listValues = listOfNotNull(
-                        ValueWithUnit.TETTReason(TT.Reason.ACTIVITY),
-                        ValueWithUnit.fromGlucoseUnit(target, units),
-                        ValueWithUnit.Minute(durationMinutes)
-                    )
-                )
-            }
-        }
-
         if (success) {
+            // Track objectives progress
+            if (percentage == 90 && durationMinutes == 10) {
+                preferences.put(BooleanNonKey.ObjectivesProfileSwitchUsed, true)
+            }
+
+            if (withTT && durationMinutes > 0 && percentage < 100) {
+                // Create Activity TT
+                val target = preferences.get(UnitDoubleKey.OverviewActivityTarget)
+                val units = profileFunction.getUnits()
+                viewModelScope.launch {
+                    persistenceLayer.insertAndCancelCurrentTemporaryTarget(
+                        TT(
+                            timestamp = timestamp + 10000, // Add ten secs for proper NSCv1 sync
+                            duration = TimeUnit.MINUTES.toMillis(durationMinutes.toLong()),
+                            reason = TT.Reason.ACTIVITY,
+                            lowTarget = profileUtil.convertToMgdl(target, units),
+                            highTarget = profileUtil.convertToMgdl(target, units)
+                        ),
+                        action = Action.TT,
+                        source = Sources.TTDialog,
+                        note = null,
+                        listValues = listOfNotNull(
+                            ValueWithUnit.Timestamp(timestamp).takeIf { timeChanged },
+                            ValueWithUnit.TETTReason(TT.Reason.ACTIVITY),
+                            ValueWithUnit.fromGlucoseUnit(target, units),
+                            ValueWithUnit.Minute(durationMinutes)
+                        )
+                    )
+                }
+            }
+
             loadData() // Refresh UI after activation
         }
 
@@ -377,6 +406,7 @@ data class ProfileManagementUiState(
     val currentProfileIndex: Int = 0,
     val activeProfileName: String? = null,
     val activeProfileSwitch: PS? = null,
+    val nextProfileName: String? = null,
     val remainingTimeMs: Long? = null,
     val basalSums: List<Double> = emptyList(),
     val profileErrors: List<List<ProfileValidationError>> = emptyList(),
