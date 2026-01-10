@@ -1,5 +1,6 @@
 package app.aaps.plugins.main.profile
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -51,6 +52,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
@@ -61,6 +63,7 @@ import app.aaps.core.graph.BasalProfileGraphCompose
 import app.aaps.core.graph.IcProfileGraphCompose
 import app.aaps.core.graph.IsfProfileGraphCompose
 import app.aaps.core.graph.TargetBgProfileGraphCompose
+import app.aaps.core.interfaces.profile.ProfileErrorType
 import app.aaps.core.objects.profile.ProfileSealed
 import app.aaps.core.ui.compose.OkCancelDialog
 import app.aaps.core.ui.compose.OkDialog
@@ -191,39 +194,80 @@ fun ProfileEditorScreen(
 
                 Spacer(Modifier.height(12.dp))
 
-                // Tab layout
+                // Tab layout with error indication
+                val diaHasError = state.tabErrors.containsKey(ProfileErrorType.DIA)
+                val icHasError = state.tabErrors.containsKey(ProfileErrorType.IC)
+                val isfHasError = state.tabErrors.containsKey(ProfileErrorType.ISF)
+                val basalHasError = state.tabErrors.containsKey(ProfileErrorType.BASAL)
+                val targetHasError = state.tabErrors.containsKey(ProfileErrorType.TARGET)
+
                 PrimaryTabRow(selectedTabIndex = state.selectedTab) {
                     Tab(
                         selected = state.selectedTab == 0,
                         onClick = { viewModel.selectTab(0) },
+                        modifier = Modifier.background(
+                            if (diaHasError) MaterialTheme.colorScheme.errorContainer else Color.Transparent
+                        ),
                         text = { Text(stringResource(R.string.dia_short)) }
                     )
                     Tab(
                         selected = state.selectedTab == 1,
                         onClick = { viewModel.selectTab(1) },
+                        modifier = Modifier.background(
+                            if (icHasError) MaterialTheme.colorScheme.errorContainer else Color.Transparent
+                        ),
                         text = { Text(stringResource(app.aaps.core.ui.R.string.ic_short)) }
                     )
                     Tab(
                         selected = state.selectedTab == 2,
                         onClick = { viewModel.selectTab(2) },
+                        modifier = Modifier.background(
+                            if (isfHasError) MaterialTheme.colorScheme.errorContainer else Color.Transparent
+                        ),
                         text = { Text(stringResource(app.aaps.core.ui.R.string.isf_short)) }
                     )
                     Tab(
                         selected = state.selectedTab == 3,
                         onClick = { viewModel.selectTab(3) },
+                        modifier = Modifier.background(
+                            if (basalHasError) MaterialTheme.colorScheme.errorContainer else Color.Transparent
+                        ),
                         text = { Text(stringResource(R.string.basal_short)) }
                     )
                     Tab(
                         selected = state.selectedTab == 4,
                         onClick = { viewModel.selectTab(4) },
+                        modifier = Modifier.background(
+                            if (targetHasError) MaterialTheme.colorScheme.errorContainer else Color.Transparent
+                        ),
                         text = { Text(stringResource(R.string.target_short)) }
                     )
                 }
 
                 Spacer(Modifier.height(16.dp))
 
-                // Tab content
+                // Tab content with error display
                 state.currentProfile?.let { profile ->
+                    // Get error message for current tab
+                    val currentTabError = when (state.selectedTab) {
+                        0 -> state.tabErrors[ProfileErrorType.DIA]
+                        1 -> state.tabErrors[ProfileErrorType.IC]
+                        2 -> state.tabErrors[ProfileErrorType.ISF]
+                        3 -> state.tabErrors[ProfileErrorType.BASAL]
+                        4 -> state.tabErrors[ProfileErrorType.TARGET]
+                        else -> null
+                    }
+
+                    // Show error message if present
+                    currentTabError?.let { error ->
+                        Text(
+                            text = error,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.error,
+                            modifier = Modifier.padding(bottom = 8.dp)
+                        )
+                    }
+
                     when (state.selectedTab) {
                         0 -> DiaContent(
                             dia = profile.dia,

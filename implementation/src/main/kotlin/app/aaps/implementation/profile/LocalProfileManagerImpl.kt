@@ -9,10 +9,12 @@ import app.aaps.core.interfaces.notifications.Notification
 import app.aaps.core.interfaces.plugin.ActivePlugin
 import app.aaps.core.interfaces.profile.LocalProfileManager
 import app.aaps.core.interfaces.profile.Profile
+import app.aaps.core.interfaces.profile.ProfileErrorType
 import app.aaps.core.interfaces.profile.ProfileFunction
 import app.aaps.core.interfaces.profile.ProfileSource
 import app.aaps.core.interfaces.profile.ProfileStore
 import app.aaps.core.interfaces.profile.ProfileUtil
+import app.aaps.core.interfaces.profile.ProfileValidationError
 import app.aaps.core.interfaces.profile.PureProfile
 import app.aaps.core.interfaces.resources.ResourceHelper
 import app.aaps.core.interfaces.rx.bus.RxBus
@@ -101,68 +103,72 @@ class LocalProfileManagerImpl @Inject constructor(
     }
 
     @Synchronized
-    override fun validateProfile(): List<String> {
-        val errors = mutableListOf<String>()
+    override fun validateProfile(): List<String> =
+        validateProfileStructured().map { it.message }.distinct()
+
+    @Synchronized
+    override fun validateProfileStructured(): List<ProfileValidationError> {
+        val errors = mutableListOf<ProfileValidationError>()
         if (numOfProfiles == 0 || currentProfileIndex >= numOfProfiles) {
-            errors.add(rh.gs(R.string.no_profile_selected))
+            errors.add(ProfileValidationError(ProfileErrorType.GENERAL, rh.gs(R.string.no_profile_selected)))
             return errors
         }
 
         val pumpDescription = activePlugin.activePump.pumpDescription
         with(_profiles[currentProfileIndex]) {
             if (dia < hardLimits.minDia() || dia > hardLimits.maxDia()) {
-                errors.add(rh.gs(R.string.value_out_of_hard_limits, rh.gs(R.string.profile_dia), dia))
+                errors.add(ProfileValidationError(ProfileErrorType.DIA, rh.gs(R.string.value_out_of_hard_limits, rh.gs(R.string.profile_dia), dia)))
             }
             if (name.isEmpty()) {
-                errors.add(rh.gs(R.string.missing_profile_name))
+                errors.add(ProfileValidationError(ProfileErrorType.NAME, rh.gs(R.string.missing_profile_name)))
             }
             if (blockFromJsonArray(ic, dateUtil)?.all { it.amount < hardLimits.minIC() || it.amount > hardLimits.maxIC() } != false) {
-                errors.add(rh.gs(R.string.error_in_ic_values))
+                errors.add(ProfileValidationError(ProfileErrorType.IC, rh.gs(R.string.error_in_ic_values)))
             }
             val low = blockFromJsonArray(targetLow, dateUtil)
             val high = blockFromJsonArray(targetHigh, dateUtil)
             if (mgdl) {
                 if (blockFromJsonArray(isf, dateUtil)?.all { hardLimits.isInRange(it.amount, HardLimits.MIN_ISF, HardLimits.MAX_ISF) } == false) {
-                    errors.add(rh.gs(R.string.error_in_isf_values))
+                    errors.add(ProfileValidationError(ProfileErrorType.ISF, rh.gs(R.string.error_in_isf_values)))
                 }
                 if (blockFromJsonArray(basal, dateUtil)?.all { it.amount < pumpDescription.basalMinimumRate || it.amount > 10.0 } != false) {
-                    errors.add(rh.gs(R.string.error_in_basal_values))
+                    errors.add(ProfileValidationError(ProfileErrorType.BASAL, rh.gs(R.string.error_in_basal_values)))
                 }
                 if (low?.all { hardLimits.isInRange(it.amount, HardLimits.LIMIT_MIN_BG[0], HardLimits.LIMIT_MIN_BG[1]) } == false) {
-                    errors.add(rh.gs(R.string.error_in_target_values))
+                    errors.add(ProfileValidationError(ProfileErrorType.TARGET, rh.gs(R.string.error_in_target_values)))
                 }
                 if (high?.all { hardLimits.isInRange(it.amount, HardLimits.LIMIT_MAX_BG[0], HardLimits.LIMIT_MAX_BG[1]) } == false) {
-                    errors.add(rh.gs(R.string.error_in_target_values))
+                    errors.add(ProfileValidationError(ProfileErrorType.TARGET, rh.gs(R.string.error_in_target_values)))
                 }
             } else {
                 if (blockFromJsonArray(isf, dateUtil)?.all { hardLimits.isInRange(profileUtil.convertToMgdl(it.amount, GlucoseUnit.MMOL), HardLimits.MIN_ISF, HardLimits.MAX_ISF) } == false) {
-                    errors.add(rh.gs(R.string.error_in_isf_values))
+                    errors.add(ProfileValidationError(ProfileErrorType.ISF, rh.gs(R.string.error_in_isf_values)))
                 }
                 if (blockFromJsonArray(basal, dateUtil)?.all { it.amount < pumpDescription.basalMinimumRate || it.amount > 10.0 } != false) {
-                    errors.add(rh.gs(R.string.error_in_basal_values))
+                    errors.add(ProfileValidationError(ProfileErrorType.BASAL, rh.gs(R.string.error_in_basal_values)))
                 }
                 if (low?.all { hardLimits.isInRange(profileUtil.convertToMgdl(it.amount, GlucoseUnit.MMOL), HardLimits.LIMIT_MIN_BG[0], HardLimits.LIMIT_MIN_BG[1]) } == false) {
-                    errors.add(rh.gs(R.string.error_in_target_values))
+                    errors.add(ProfileValidationError(ProfileErrorType.TARGET, rh.gs(R.string.error_in_target_values)))
                 }
                 if (high?.all { hardLimits.isInRange(profileUtil.convertToMgdl(it.amount, GlucoseUnit.MMOL), HardLimits.LIMIT_MAX_BG[0], HardLimits.LIMIT_MAX_BG[1]) } == false) {
-                    errors.add(rh.gs(R.string.error_in_target_values))
+                    errors.add(ProfileValidationError(ProfileErrorType.TARGET, rh.gs(R.string.error_in_target_values)))
                 }
             }
             low?.let { lowList ->
                 high?.let { highList ->
                     for (i in lowList.indices) {
                         if (lowList[i].amount > highList[i].amount) {
-                            errors.add(rh.gs(R.string.error_in_target_values))
+                            errors.add(ProfileValidationError(ProfileErrorType.TARGET, rh.gs(R.string.error_in_target_values)))
                             break
                         }
                     }
                 }
             }
             if (name.contains(".")) {
-                errors.add(rh.gs(R.string.profile_name_contains_dot))
+                errors.add(ProfileValidationError(ProfileErrorType.NAME, rh.gs(R.string.profile_name_contains_dot)))
             }
         }
-        return errors.distinct()
+        return errors.distinctBy { it.type to it.message }
     }
 
     @Synchronized

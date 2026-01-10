@@ -59,15 +59,24 @@ interface LocalProfileManager {
      * Returns list of validation error messages, empty if valid.
      *
      * @return List of error messages, empty if profile is valid
+     * @deprecated Use [validateProfileStructured] for typed errors
      */
     fun validateProfile(): List<String>
+
+    /**
+     * Validate the current profile with structured error types.
+     * Returns list of validation errors with type information, empty if valid.
+     *
+     * @return List of [ProfileValidationError], empty if profile is valid
+     */
+    fun validateProfileStructured(): List<ProfileValidationError>
 
     /**
      * Check if the current profile is valid.
      *
      * @return true if valid, false otherwise
      */
-    fun isValid(): Boolean = validateProfile().isEmpty()
+    fun isValid(): Boolean = validateProfileStructured().isEmpty()
 
     /**
      * Load profiles from SharedPreferences.

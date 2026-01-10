@@ -40,6 +40,8 @@ import app.aaps.plugins.configuration.activities.SingleFragmentActivity
 import app.aaps.plugins.configuration.setupwizard.SetupWizardActivity
 import app.aaps.plugins.main.profile.ProfileEditorScreen
 import app.aaps.plugins.main.profile.ProfileEditorViewModel
+import app.aaps.ui.compose.profileManagement.ProfileManagementScreen
+import app.aaps.ui.compose.profileManagement.ProfileManagementViewModel
 import app.aaps.plugins.main.skins.SkinProvider
 import app.aaps.ui.compose.actions.ActionsViewModel
 import app.aaps.ui.compose.main.MainMenuItem
@@ -79,6 +81,7 @@ class ComposeMainActivity : DaggerAppCompatActivityWithResult() {
     @Inject lateinit var statsViewModel: StatsViewModel
     @Inject lateinit var profileHelperViewModel: ProfileHelperViewModel
     @Inject lateinit var profileEditorViewModel: ProfileEditorViewModel
+    @Inject lateinit var profileManagementViewModel: ProfileManagementViewModel
 
     private val disposable = CompositeDisposable()
 
@@ -227,6 +230,35 @@ class ComposeMainActivity : DaggerAppCompatActivityWithResult() {
                     }
 
                     composable(AppRoute.Profile.route) {
+                        ProfileManagementScreen(
+                            viewModel = profileManagementViewModel,
+                            onNavigateBack = { navController.popBackStack() },
+                            onEditProfile = { index ->
+                                profileEditorViewModel.selectProfile(index)
+                                navController.navigate(AppRoute.ProfileEditor.createRoute(index))
+                            },
+                            onShowProfile = { index ->
+                                // TODO: Navigate to ProfileViewer
+                            },
+                            onActivateProfile = { index ->
+                                val profile = profileManagementViewModel.uiState.value.profiles.getOrNull(index)
+                                profile?.let {
+                                    uiInteraction.runProfileSwitchDialog(supportFragmentManager, it.name)
+                                }
+                            }
+                        )
+                    }
+
+                    composable(
+                        route = AppRoute.ProfileEditor.route,
+                        arguments = listOf(
+                            androidx.navigation.navArgument("profileIndex") {
+                                type = androidx.navigation.NavType.IntType
+                            }
+                        )
+                    ) { backStackEntry ->
+                        val profileIndex = backStackEntry.arguments?.getInt("profileIndex") ?: 0
+                        profileEditorViewModel.selectProfile(profileIndex)
                         ProfileEditorScreen(
                             viewModel = profileEditorViewModel,
                             onBackClick = { navController.popBackStack() },

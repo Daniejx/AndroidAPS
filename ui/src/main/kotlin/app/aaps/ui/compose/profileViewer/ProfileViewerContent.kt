@@ -71,33 +71,34 @@ fun ProfileSingleContent(
         modifier = Modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        // Units Card
-        ElevatedCard(
+        // Units & DIA Card (combined to save space)
+        Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp),
-            elevation = CardDefaults.elevatedCardElevation(defaultElevation = 2.dp)
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            Column(modifier = Modifier.padding(16.dp)) {
-                ProfileRow(
-                    label = stringResource(R.string.units_label),
-                    value = profile.units.asText
-                )
+            ElevatedCard(
+                modifier = Modifier.weight(1f),
+                elevation = CardDefaults.elevatedCardElevation(defaultElevation = 2.dp)
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    ProfileRow(
+                        label = stringResource(R.string.units_label),
+                        value = profile.units.asText
+                    )
+                }
             }
-        }
-
-        // DIA Card
-        ElevatedCard(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp),
-            elevation = CardDefaults.elevatedCardElevation(defaultElevation = 2.dp)
-        ) {
-            Column(modifier = Modifier.padding(16.dp)) {
-                ProfileRow(
-                    label = stringResource(R.string.dia_label),
-                    value = formatDia(profile.dia)
-                )
+            ElevatedCard(
+                modifier = Modifier.weight(1f),
+                elevation = CardDefaults.elevatedCardElevation(defaultElevation = 2.dp)
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    ProfileRow(
+                        label = stringResource(R.string.dia_label),
+                        value = formatDia(profile.dia)
+                    )
+                }
             }
         }
 

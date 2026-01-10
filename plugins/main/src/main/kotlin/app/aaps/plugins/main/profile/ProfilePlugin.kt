@@ -83,7 +83,9 @@ class ProfilePlugin @Inject constructor(
             // Filter out dot warning - it's shown separately in storeSettings
             val criticalErrors = errors.filter { it != rh.gs(app.aaps.core.ui.R.string.profile_name_contains_dot) }
             if (criticalErrors.isNotEmpty()) {
-                ToastUtils.errorToast(activity, criticalErrors.first())
+                // Only show toast if activity is provided (legacy XML UI)
+                // Compose UI should use localProfileManager.validateProfile() directly
+                activity?.let { ToastUtils.errorToast(it, criticalErrors.first()) }
                 return false
             }
         }

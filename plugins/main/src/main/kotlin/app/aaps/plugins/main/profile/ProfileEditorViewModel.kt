@@ -6,8 +6,11 @@ import app.aaps.core.data.model.GlucoseUnit
 import app.aaps.core.interfaces.logging.AAPSLogger
 import app.aaps.core.interfaces.logging.LTag
 import app.aaps.core.interfaces.plugin.ActivePlugin
+import app.aaps.core.interfaces.profile.LocalProfileManager
+import app.aaps.core.interfaces.profile.ProfileErrorType
 import app.aaps.core.interfaces.profile.ProfileFunction
 import app.aaps.core.interfaces.profile.ProfileSource
+import app.aaps.core.interfaces.profile.ProfileValidationError
 import app.aaps.core.interfaces.protection.ProtectionCheck
 import app.aaps.core.interfaces.resources.ResourceHelper
 import app.aaps.core.interfaces.rx.AapsSchedulers
@@ -64,7 +67,9 @@ data class ProfileUiState(
     val isfMin: Double = 2.0,
     val isfMax: Double = 1000.0,
     val targetMin: Double = 72.0,
-    val targetMax: Double = 180.0
+    val targetMax: Double = 180.0,
+    /** Map of error type to error message for tabs with validation errors */
+    val tabErrors: Map<ProfileErrorType, String> = emptyMap()
 )
 
 class ProfileEditorViewModel @Inject constructor(
@@ -72,6 +77,7 @@ class ProfileEditorViewModel @Inject constructor(
     private val rxBus: RxBus,
     private val rh: ResourceHelper,
     private val profilePlugin: ProfilePlugin,
+    private val localProfileManager: LocalProfileManager,
     private val profileFunction: ProfileFunction,
     private val activePlugin: ActivePlugin,
     private val hardLimits: HardLimits,
@@ -111,13 +117,19 @@ class ProfileEditorViewModel @Inject constructor(
         val currentUnits = currentProfile?.mgdl?.let { if (it) GlucoseUnit.MGDL else GlucoseUnit.MMOL } ?: profileFunction.getUnits()
         val isMgdl = currentUnits == GlucoseUnit.MGDL
 
+        // Get structured validation errors and build tab error map
+        val validationErrors = localProfileManager.validateProfileStructured()
+        val tabErrors = validationErrors
+            .filter { it.type != ProfileErrorType.NAME || it.message != rh.gs(app.aaps.core.ui.R.string.profile_name_contains_dot) }
+            .associateBy({ it.type }, { it.message })
+
         _uiState.update { state ->
             state.copy(
                 profiles = profiles,
                 currentProfileIndex = profilePlugin.currentProfileIndex,
                 currentProfile = currentProfile?.toState(),
                 isEdited = profilePlugin.isEdited,
-                isValid = profilePlugin.numOfProfiles > 0 && profilePlugin.isValidEditState(null),
+                isValid = profilePlugin.numOfProfiles > 0 && tabErrors.isEmpty(),
                 isLocked = isLocked,
                 units = currentUnits.asText,
                 supportsDynamicIsf = aps.supportsDynamicIsf(),
@@ -131,7 +143,8 @@ class ProfileEditorViewModel @Inject constructor(
                 isfMin = if (isMgdl) HardLimits.MIN_ISF else HardLimits.MIN_ISF / 18.0,
                 isfMax = if (isMgdl) HardLimits.MAX_ISF else HardLimits.MAX_ISF / 18.0,
                 targetMin = if (isMgdl) HardLimits.LIMIT_MIN_BG[0] else HardLimits.LIMIT_MIN_BG[0] / 18.0,
-                targetMax = if (isMgdl) HardLimits.LIMIT_MAX_BG[1] else HardLimits.LIMIT_MAX_BG[1] / 18.0
+                targetMax = if (isMgdl) HardLimits.LIMIT_MAX_BG[1] else HardLimits.LIMIT_MAX_BG[1] / 18.0,
+                tabErrors = tabErrors
             )
         }
     }

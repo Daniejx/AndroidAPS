@@ -159,26 +159,34 @@ plugins/main/src/main/kotlin/app/aaps/plugins/main/profile/LocalProfileManagerIm
 - [x] Added Dagger binding in `ImplementationModule`
 - [x] Compile verified
 
-### Phase 1: Profile Management Screen
-- [ ] Create `ProfileManagementScreen` composable
-  - [ ] Scaffold with TopAppBar
-  - [ ] LazyColumn of ProfileCards
-  - [ ] FAB or toolbar action for "Add Profile"
-- [ ] Create `ProfileManagementViewModel`
-  - [ ] Observes LocalProfileManager for profile list
-  - [ ] Observes ProfileFunction for active profile state
-  - [ ] Handles add/clone/remove profile actions
+### Phase 1: Profile Management Screen ✅ COMPLETE
+- [x] Created `ProfileManagementScreen` composable in `ui/compose/profileManagement/`
+  - [x] LazyColumn of ProfileCards
+  - [x] FAB for "Add Profile"
+  - [x] Delete confirmation dialog
+- [x] Created `ProfileManagementViewModel`
+  - [x] Observes LocalProfileManager for profile list
+  - [x] Observes ProfileFunction for active profile state (via getRequestedProfile)
+  - [x] Handles add/clone/remove profile actions
+  - [x] Observes EventLocalProfileChanged and EventProfileStoreChanged for updates
 
-### Phase 2: ProfileCard Component
-- [ ] Create `ProfileCard` composable
-  - [ ] Profile name display
-  - [ ] Active state highlighting (different color)
-  - [ ] When active: percentage, timeshift, remaining time
-  - [ ] Following profile (when temp expires)
-  - [ ] Action buttons: Edit, Show, Activate
-- [ ] Create `ProfileCardState` data class
+### Phase 2: ProfileCard Component ✅ COMPLETE (included in Phase 1)
+- [x] Created `ProfileCard` composable
+  - [x] Profile name display
+  - [x] Active state highlighting (different color - primaryContainer)
+  - [x] When active: percentage, timeshift, remaining time
+  - [x] Action buttons: Edit, Show, Activate, Clone, Delete
+- [x] Created `ActiveProfileDetails` composable for displaying active profile info
+- [x] Created `DetailChip` composable for label+value display
 
-### Phase 3: Profile Activation (Compose)
+### Phase 3: Simplify ProfileEditor
+- [ ] Remove profile list management from ProfileEditorScreen
+  - [ ] Remove ProfileHeader with add/clone/delete
+  - [ ] Remove profile dropdown
+- [ ] ProfileEditor receives profile index/name as parameter
+- [ ] Only handles editing single profile values
+
+### Phase 4: Profile Activation (Compose)
 - [ ] Create activation UI (bottom sheet or dialog)
   - [ ] Duration input (0 = permanent)
   - [ ] Percentage slider (30-200%)
@@ -187,18 +195,14 @@ plugins/main/src/main/kotlin/app/aaps/plugins/main/profile/LocalProfileManagerIm
   - [ ] Reuse button (when current has custom %)
 - [ ] Wire to ProfileFunction.createProfileSwitch()
 
-### Phase 4: Simplify ProfileEditor
-- [ ] Remove profile list management from ProfileEditorScreen
-  - [ ] Remove ProfileHeader with add/clone/delete
-  - [ ] Remove profile dropdown
-- [ ] ProfileEditor receives profile index/name as parameter
-- [ ] Only handles editing single profile values
-
-### Phase 5: Integration & Navigation
+### Phase 5: Integration & Navigation (PARTIAL)
 - [ ] Wire Edit action → ProfileEditor
 - [ ] Wire Show action → ProfileViewer
-- [ ] Wire Activate action → Activation UI
-- [ ] Update ProfilePlugin to show new screen
+- [x] Wire Activate action → ProfileSwitchDialog (existing)
+- [x] Updated ComposeMainActivity to show ProfileManagementScreen
+  - [x] Injected ProfileManagementViewModel
+  - [x] Replaced ProfileEditorScreen with ProfileManagementScreen for Profile route
+  - [x] Drawer → Profile now opens ProfileManagementScreen
 - [ ] Handle navigation back from sub-screens
 
 ### Phase 6: Testing & Polish
@@ -208,8 +212,9 @@ plugins/main/src/main/kotlin/app/aaps/plugins/main/profile/LocalProfileManagerIm
 
 ---
 
-## Files Created (Phase 0)
+## Files Created
 
+### Phase 0
 ```
 core/interfaces/src/.../profile/LocalProfileManager.kt     # Interface ✅
 implementation/src/.../profile/LocalProfileManagerImpl.kt  # Implementation ✅
@@ -220,14 +225,18 @@ core/keys/src/.../ProfileIntKey.kt                         # Keys ✅
 core/ui/src/.../compose/Snackbar.kt                        # Snackbar infrastructure ✅
 ```
 
+### Phase 1 & 2
+```
+ui/src/.../compose/profileManagement/
+├── ProfileManagementScreen.kt                             # Main screen + ProfileCard ✅
+└── ProfileManagementViewModel.kt                          # ViewModel ✅
+```
+
 ## Files to Create (Remaining Phases)
 
 ```
 ui/src/.../compose/profileManagement/
-├── ProfileManagementScreen.kt                             # Main screen
-├── ProfileManagementViewModel.kt                          # ViewModel
-├── ProfileCard.kt                                         # Card composable
-└── ProfileActivationSheet.kt                              # Activation bottom sheet
+└── ProfileActivationSheet.kt                              # Activation bottom sheet (Phase 3)
 ```
 
 ## Files to Modify
