@@ -12,10 +12,16 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.DatePicker
+import androidx.compose.material3.DatePickerDialog
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TimePicker
+import androidx.compose.material3.rememberDatePickerState
+import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -247,28 +253,78 @@ fun ErrorDialog(
 }
 
 /**
- * A dialog for time picker with confirm and dismiss buttons.
+ * A modal date picker dialog.
  *
- * @param onDismissRequest Called when dialog is dismissed
- * @param onConfirm Called when confirm button is clicked
- * @param content The time picker content to display
+ * @param onDateSelected Called with the selected date in milliseconds (UTC)
+ * @param onDismiss Called when dialog is dismissed
+ * @param initialDateMillis Initial date to display (UTC milliseconds)
  */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun TimePickerDialog(
-    onDismissRequest: () -> Unit,
-    onConfirm: () -> Unit,
-    content: @Composable () -> Unit
+fun DatePickerModal(
+    onDateSelected: (Long?) -> Unit,
+    onDismiss: () -> Unit,
+    initialDateMillis: Long? = null
 ) {
-    AlertDialog(
-        onDismissRequest = onDismissRequest,
-        text = { content() },
+    val datePickerState = rememberDatePickerState(initialSelectedDateMillis = initialDateMillis)
+
+    DatePickerDialog(
+        onDismissRequest = onDismiss,
         confirmButton = {
-            TextButton(onClick = onConfirm) {
+            TextButton(onClick = {
+                onDateSelected(datePickerState.selectedDateMillis)
+                onDismiss()
+            }) {
                 Text(stringResource(R.string.ok))
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismissRequest) {
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(R.string.cancel))
+            }
+        }
+    ) {
+        DatePicker(state = datePickerState)
+    }
+}
+
+/**
+ * A modal time picker dialog.
+ *
+ * @param onTimeSelected Called with the selected hour and minute
+ * @param onDismiss Called when dialog is dismissed
+ * @param initialHour Initial hour (0-23)
+ * @param initialMinute Initial minute (0-59)
+ * @param is24Hour Whether to use 24-hour format
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun TimePickerModal(
+    onTimeSelected: (hour: Int, minute: Int) -> Unit,
+    onDismiss: () -> Unit,
+    initialHour: Int = 0,
+    initialMinute: Int = 0,
+    is24Hour: Boolean = true
+) {
+    val timePickerState = rememberTimePickerState(
+        initialHour = initialHour,
+        initialMinute = initialMinute,
+        is24Hour = is24Hour
+    )
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        text = { TimePicker(state = timePickerState) },
+        confirmButton = {
+            TextButton(onClick = {
+                onTimeSelected(timePickerState.hour, timePickerState.minute)
+                onDismiss()
+            }) {
+                Text(stringResource(R.string.ok))
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
                 Text(stringResource(R.string.cancel))
             }
         },

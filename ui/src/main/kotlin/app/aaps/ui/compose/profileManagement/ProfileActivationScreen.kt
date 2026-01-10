@@ -18,8 +18,6 @@ import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.outlined.Schedule
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.DatePicker
-import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.HorizontalDivider
@@ -31,11 +29,7 @@ import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.TimePicker
 import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.rememberDatePickerState
-import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableDoubleStateOf
@@ -51,9 +45,10 @@ import androidx.compose.ui.unit.dp
 import app.aaps.core.data.configuration.Constants
 import app.aaps.core.interfaces.resources.ResourceHelper
 import app.aaps.core.interfaces.utils.DateUtil
+import app.aaps.core.ui.compose.DatePickerModal
 import app.aaps.core.ui.compose.NumberInputRow
 import app.aaps.core.ui.compose.OkCancelDialog
-import app.aaps.core.ui.compose.TimePickerDialog
+import app.aaps.core.ui.compose.TimePickerModal
 import app.aaps.ui.R
 import java.util.Calendar
 
@@ -155,52 +150,32 @@ fun ProfileActivationScreen(
         }
     }
 
-    // Date picker dialog
+    // Date picker modal
     if (showDatePicker) {
-        val calendar = Calendar.getInstance().apply { timeInMillis = eventTime }
-        val datePickerState = rememberDatePickerState(
-            initialSelectedDateMillis = dateUtil.timeStampToUtcDateMillis(eventTime)
-        )
-        DatePickerDialog(
-            onDismissRequest = { showDatePicker = false },
-            confirmButton = {
-                TextButton(onClick = {
-                    datePickerState.selectedDateMillis?.let { selectedMillis ->
-                        eventTime = dateUtil.mergeUtcDateToTimestamp(eventTime, selectedMillis)
-                    }
-                    showDatePicker = false
-                }) {
-                    Text(stringResource(android.R.string.ok))
+        DatePickerModal(
+            initialDateMillis = dateUtil.timeStampToUtcDateMillis(eventTime),
+            onDateSelected = { selectedMillis ->
+                selectedMillis?.let {
+                    eventTime = dateUtil.mergeUtcDateToTimestamp(eventTime, it)
                 }
             },
-            dismissButton = {
-                TextButton(onClick = { showDatePicker = false }) {
-                    Text(stringResource(android.R.string.cancel))
-                }
-            }
-        ) {
-            DatePicker(state = datePickerState)
-        }
+            onDismiss = { showDatePicker = false }
+        )
     }
 
-    // Time picker dialog
+    // Time picker modal
     if (showTimePicker) {
         val context = LocalContext.current
         val calendar = Calendar.getInstance().apply { timeInMillis = eventTime }
-        val timePickerState = rememberTimePickerState(
+        TimePickerModal(
             initialHour = calendar.get(Calendar.HOUR_OF_DAY),
             initialMinute = calendar.get(Calendar.MINUTE),
-            is24Hour = android.text.format.DateFormat.is24HourFormat(context)
+            is24Hour = android.text.format.DateFormat.is24HourFormat(context),
+            onTimeSelected = { hour, minute ->
+                eventTime = dateUtil.mergeHourMinuteToTimestamp(eventTime, hour, minute, true)
+            },
+            onDismiss = { showTimePicker = false }
         )
-        TimePickerDialog(
-            onDismissRequest = { showTimePicker = false },
-            onConfirm = {
-                eventTime = dateUtil.mergeHourMinuteToTimestamp(eventTime, timePickerState.hour, timePickerState.minute, true)
-                showTimePicker = false
-            }
-        ) {
-            TimePicker(state = timePickerState)
-        }
     }
 
     // Confirmation dialog
