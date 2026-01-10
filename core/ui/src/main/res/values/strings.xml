@@ -475,6 +475,18 @@
     <string name="value_out_of_hard_limits">»%1$s« %2$.2f is out of hard limits</string>
     <string name="basal_value">Basal value</string>
 
+    <!-- Profile validation -->
+    <string name="no_profile_selected">No profile selected</string>
+    <string name="missing_profile_name">Missing profile name</string>
+    <string name="error_in_ic_values">Error in IC values</string>
+    <string name="error_in_isf_values">Error in ISF values</string>
+    <string name="error_in_basal_values">Error in basal values</string>
+    <string name="error_in_target_values">Error in target values</string>
+    <string name="profile_name_contains_dot">Some of profile names contains dots.\nThis is not supported by NS.\nProfiles will not be uploaded to NS.</string>
+    <string name="invalid_profile_not_accepted">Invalid profile %1$s not accepted from NS</string>
+    <string name="errors">Errors</string>
+    <string name="view">View</string>
+
     <!-- Command Queue + readStatus reasons -->
     <string name="bolus_u_min">BOLUS %1$.2f U</string>
     <string name="carbs_g">CARBS %1$d g</string>

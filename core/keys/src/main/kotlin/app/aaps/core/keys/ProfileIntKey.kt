@@ -1,7 +1,8 @@
-package app.aaps.plugins.main.profile.keys
+package app.aaps.core.keys
 
-import app.aaps.core.data.configuration.Constants
 import app.aaps.core.keys.interfaces.IntNonPreferenceKey
+
+private const val LOCAL_PROFILE = "LocalProfile"
 
 enum class ProfileIntKey(
     override val key: String,
@@ -9,5 +10,5 @@ enum class ProfileIntKey(
     override val exportable: Boolean = true
 ) : IntNonPreferenceKey {
 
-    AmountOfProfiles(Constants.LOCAL_PROFILE + "_profiles", 0),
+    AmountOfProfiles(LOCAL_PROFILE + "_profiles", 0),
 }

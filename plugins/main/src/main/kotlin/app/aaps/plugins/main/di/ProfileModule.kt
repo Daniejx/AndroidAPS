@@ -18,5 +18,4 @@ abstract class ProfileModule {
 
         @Binds fun bindProfileSource(profilePlugin: ProfilePlugin): ProfileSource
     }
-
 }

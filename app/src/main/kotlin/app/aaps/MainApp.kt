@@ -37,6 +37,9 @@ import app.aaps.core.keys.BooleanKey
 import app.aaps.core.keys.BooleanNonKey
 import app.aaps.core.keys.IntKey
 import app.aaps.core.keys.LongComposedKey
+import app.aaps.core.keys.ProfileComposedBooleanKey
+import app.aaps.core.keys.ProfileComposedDoubleKey
+import app.aaps.core.keys.ProfileComposedStringKey
 import app.aaps.core.keys.StringKey
 import app.aaps.core.keys.UnitDoubleKey
 import app.aaps.core.keys.interfaces.Preferences
@@ -52,9 +55,6 @@ import app.aaps.implementation.receivers.NetworkChangeReceiver
 import app.aaps.plugins.configuration.keys.ConfigurationBooleanComposedKey
 import app.aaps.plugins.constraints.objectives.keys.ObjectivesLongComposedKey
 import app.aaps.plugins.main.general.themes.ThemeSwitcherPlugin
-import app.aaps.plugins.main.profile.keys.ProfileComposedBooleanKey
-import app.aaps.plugins.main.profile.keys.ProfileComposedDoubleKey
-import app.aaps.plugins.main.profile.keys.ProfileComposedStringKey
 import app.aaps.receivers.BTReceiver
 import app.aaps.receivers.ChargingStateReceiver
 import app.aaps.receivers.KeepAliveWorker

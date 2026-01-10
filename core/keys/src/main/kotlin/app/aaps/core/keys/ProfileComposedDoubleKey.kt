@@ -1,7 +1,9 @@
-package app.aaps.plugins.main.profile.keys
+package app.aaps.core.keys
 
-import app.aaps.core.data.configuration.Constants
 import app.aaps.core.keys.interfaces.DoubleComposedNonPreferenceKey
+
+private const val LOCAL_PROFILE = "LocalProfile"
+private const val DEFAULT_DIA = 5.0
 
 enum class ProfileComposedDoubleKey(
     override val key: String,
@@ -10,5 +12,5 @@ enum class ProfileComposedDoubleKey(
     override val exportable: Boolean = true
 ) : DoubleComposedNonPreferenceKey {
 
-    LocalProfileNumberedDia(Constants.LOCAL_PROFILE + "_dia_", "%d", Constants.defaultDIA),
+    LocalProfileNumberedDia(LOCAL_PROFILE + "_dia_", "%d", DEFAULT_DIA),
 }

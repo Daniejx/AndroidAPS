@@ -43,6 +43,11 @@
 - Avoid duplication while writing new code and resources. Prefer moving to another module. Elaborate
   if you think, it's necessary
 - When resource strings are affected, change only english version. Ignore translations
+- **Avoid adding new module dependencies** - Adding dependencies between modules can significantly
+  slow down compilation time. Always discuss before adding dependencies. Prefer alternatives:
+    - Inline constants instead of importing from another module
+    - Move shared code to existing common modules
+    - Use interfaces defined in core modules
 
 ## Migration Procedures
 

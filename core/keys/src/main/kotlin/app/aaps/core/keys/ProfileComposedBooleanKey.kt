@@ -1,7 +1,8 @@
-package app.aaps.plugins.main.profile.keys
+package app.aaps.core.keys
 
-import app.aaps.core.data.configuration.Constants
 import app.aaps.core.keys.interfaces.BooleanComposedNonPreferenceKey
+
+private const val LOCAL_PROFILE = "LocalProfile"
 
 enum class ProfileComposedBooleanKey(
     override val key: String,
@@ -10,6 +11,5 @@ enum class ProfileComposedBooleanKey(
     override val exportable: Boolean = true
 ) : BooleanComposedNonPreferenceKey {
 
-    LocalProfileNumberedMgdl(Constants.LOCAL_PROFILE + "_mgdl_", "%d", false),
+    LocalProfileNumberedMgdl(LOCAL_PROFILE + "_mgdl_", "%d", false),
 }
-

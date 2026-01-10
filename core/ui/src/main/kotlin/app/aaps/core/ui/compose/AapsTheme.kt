@@ -99,6 +99,19 @@ object AapsTheme {
         @Composable
         @ReadOnlyComposable
         get() = LocalGeneralColors.current
+
+    /**
+     * Color scheme for snackbar messages.
+     * Provides colors for error, warning, info, and success messages.
+     *
+     * Automatically adapts to light/dark mode based on current theme.
+     *
+     * @see SnackbarColors for detailed color assignments
+     */
+    val snackbarColors: SnackbarColors
+        @Composable
+        @ReadOnlyComposable
+        get() = LocalSnackbarColors.current
 }
 
 /**
@@ -221,11 +234,13 @@ fun AapsTheme(
     val profileViewerColors = if (isDark) DarkProfileHelperColors else LightProfileHelperColors
     val treatmentIconColors = if (isDark) DarkElementColors else LightElementColors
     val generalColors = if (isDark) DarkGeneralColors else LightGeneralColors
+    val snackbarColors = if (isDark) DarkSnackbarColors else LightSnackbarColors
 
     CompositionLocalProvider(
         LocalProfileHelperColors provides profileViewerColors,
         LocalElementColors provides treatmentIconColors,
-        LocalGeneralColors provides generalColors
+        LocalGeneralColors provides generalColors,
+        LocalSnackbarColors provides snackbarColors
     ) {
         MaterialTheme(
             colorScheme = scheme,

@@ -63,6 +63,7 @@ object Constants {
 
     // Local profile
     const val LOCAL_PROFILE = "LocalProfile"
+    const val DEFAULT_PROFILE_ARRAY = "[{\"time\":\"00:00\",\"timeAsSeconds\":0,\"value\":0}]"
 
     // One Time Password
     /**
