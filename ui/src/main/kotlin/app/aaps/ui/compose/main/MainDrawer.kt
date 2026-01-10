@@ -71,13 +71,6 @@ fun MainDrawer(
         ) {
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Quick access menu items - Profile first
-            DrawerMenuItem(
-                iconRes = app.aaps.core.objects.R.drawable.ic_local_profile,
-                label = stringResource(app.aaps.core.ui.R.string.localprofile),
-                onClick = { onMenuItemClick(MainMenuItem.Profile) }
-            )
-
             DrawerMenuItem(
                 iconRes = app.aaps.core.objects.R.drawable.ic_treatments,
                 label = stringResource(app.aaps.core.ui.R.string.treatments),

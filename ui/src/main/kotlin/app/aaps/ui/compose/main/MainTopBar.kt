@@ -14,7 +14,6 @@ import androidx.compose.ui.res.stringResource
 sealed class MainMenuItem(val id: String) {
     data object Preferences : MainMenuItem("preferences")
     data object PluginPreferences : MainMenuItem("plugin_preferences")
-    data object Profile : MainMenuItem("profile")
     data object Treatments : MainMenuItem("treatments")
     data object HistoryBrowser : MainMenuItem("history_browser")
     data object SetupWizard : MainMenuItem("setup_wizard")

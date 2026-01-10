@@ -414,12 +414,6 @@ class ComposeMainActivity : DaggerAppCompatActivityWithResult() {
                 })
             }
 
-            is MainMenuItem.Profile -> {
-                protectionCheck.queryProtection(this, ProtectionCheck.Protection.PREFERENCES, {
-                    navController.navigate(AppRoute.Profile.route)
-                })
-            }
-
             is MainMenuItem.Treatments -> {
                 navController.navigate(AppRoute.Treatments.route)
             }

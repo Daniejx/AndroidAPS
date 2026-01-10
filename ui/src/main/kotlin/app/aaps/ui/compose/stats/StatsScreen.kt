@@ -17,7 +17,6 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -36,6 +35,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
+import app.aaps.core.ui.compose.AapsCard
 import app.aaps.ui.R
 import app.aaps.ui.compose.stats.viewmodels.StatsViewModel
 
@@ -82,7 +82,7 @@ fun StatsScreen(
             Box(
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Card(
+                AapsCard(
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Column(
@@ -151,7 +151,7 @@ fun StatsScreen(
             }
 
             // TIR Section
-            Card(
+            AapsCard(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Column(
@@ -201,7 +201,7 @@ fun StatsScreen(
             }
 
             // Dexcom TIR Section
-            Card(
+            AapsCard(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Column(
@@ -253,7 +253,7 @@ fun StatsScreen(
             Box(
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Card(
+                AapsCard(
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Column(
