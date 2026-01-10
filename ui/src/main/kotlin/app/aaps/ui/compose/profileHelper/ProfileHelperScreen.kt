@@ -453,7 +453,7 @@ fun DefaultProfileContent(
             minValue = 1.0,
             maxValue = 99.0,
             step = 1.0,
-            unitLabel = stringResource(app.aaps.core.keys.R.string.units_years)
+            unitLabelResId = app.aaps.core.keys.R.string.units_years
         )
         if (showTdd) NumberInputRow(
             label = stringResource(app.aaps.core.ui.R.string.tdd_total),
@@ -462,7 +462,7 @@ fun DefaultProfileContent(
             minValue = 0.0,
             maxValue = 200.0,
             step = 1.0,
-            unitLabel = stringResource(app.aaps.core.keys.R.string.units_insulin)
+            unitLabelResId = app.aaps.core.keys.R.string.units_insulin
         )
         if (showWeight) NumberInputRow(
             label = stringResource(R.string.weight_label),
@@ -471,7 +471,7 @@ fun DefaultProfileContent(
             minValue = 0.0,
             maxValue = 150.0,
             step = 1.0,
-            unitLabel = stringResource(app.aaps.core.keys.R.string.units_kg)
+            unitLabelResId = app.aaps.core.keys.R.string.units_kg
         )
         if (showPct) NumberInputRow(
             label = stringResource(R.string.basal_pct_from_tdd_label),
@@ -480,7 +480,7 @@ fun DefaultProfileContent(
             minValue = 32.0,
             maxValue = 37.0,
             step = 1.0,
-            unitLabel = stringResource(app.aaps.core.keys.R.string.units_percent)
+            unitLabelResId = app.aaps.core.keys.R.string.units_percent
         )
     }
 }

@@ -182,7 +182,7 @@ fun ProfileActivationScreen(
         ) {
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Duration input
+            // Duration input - automatically formats as "Xh Ym" when >= 60
             NumberInputRow(
                 label = stringResource(app.aaps.core.ui.R.string.duration),
                 value = duration,
@@ -190,8 +190,7 @@ fun ProfileActivationScreen(
                 minValue = 0.0,
                 maxValue = Constants.MAX_PROFILE_SWITCH_DURATION,
                 step = 10.0,
-                unitLabel = stringResource(app.aaps.core.keys.R.string.units_min),
-                summary = if (duration == 0.0) stringResource(R.string.permanent_profile_switch) else null
+                unitLabelResId = app.aaps.core.keys.R.string.units_min
             )
 
             HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
@@ -204,7 +203,7 @@ fun ProfileActivationScreen(
                 minValue = Constants.CPP_MIN_PERCENTAGE.toDouble(),
                 maxValue = Constants.CPP_MAX_PERCENTAGE.toDouble(),
                 step = 5.0,
-                unitLabel = stringResource(app.aaps.core.keys.R.string.units_percent)
+                unitLabelResId = app.aaps.core.keys.R.string.units_percent
             )
 
             HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
@@ -217,7 +216,7 @@ fun ProfileActivationScreen(
                 minValue = Constants.CPP_MIN_TIMESHIFT.toDouble(),
                 maxValue = Constants.CPP_MAX_TIMESHIFT.toDouble(),
                 step = 1.0,
-                unitLabel = stringResource(app.aaps.core.keys.R.string.units_hours)
+                unitLabelResId = app.aaps.core.keys.R.string.units_hours
             )
 
             // Reuse button
@@ -260,11 +259,12 @@ fun ProfileActivationScreen(
                         onCheckedChange = { withTT = it }
                     )
                 }
-                HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
             }
 
             // Notes (conditional based on BooleanKey.OverviewShowNotesInDialogs)
             if (showNotesField) {
+                HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+
                 OutlinedTextField(
                     value = notes,
                     onValueChange = { notes = it },

@@ -158,7 +158,17 @@ fun ProfileSingleContent(
             Column(modifier = Modifier.padding(16.dp)) {
                 ProfileRow(
                     label = stringResource(R.string.basal_label),
-                    value = "∑ " + formatBasalSum(profile.baseBasalSum()) + "\n" + getBasalList(profile)
+                    value = getBasalList(profile)
+                )
+                // Sum displayed above graph
+                Text(
+                    text = "∑ " + formatBasalSum(profile.baseBasalSum()),
+                    style = MaterialTheme.typography.bodySmall,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 8.dp),
+                    textAlign = TextAlign.Center
                 )
                 BasalProfileGraphCompose(
                     profile1 = profile,
@@ -166,7 +176,7 @@ fun ProfileSingleContent(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(300.dp)
-                        .padding(top = 16.dp)
+                        .padding(top = 8.dp)
                 )
             }
         }
@@ -487,28 +497,67 @@ fun ProfileCompareContent(
  */
 @Composable
 fun ProfileRow(label: String, value: String, showColon: Boolean = true) {
-    Row(
+    val lines = value.split("\n").filter { it.isNotBlank() }
+    val useColumns = lines.size > 3
+
+    Column(
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 4.dp)
     ) {
-        Text(
-            text = label,
-            modifier = Modifier.weight(1f),
-            style = MaterialTheme.typography.bodySmall,
-            fontWeight = FontWeight.Bold
-        )
-        if (showColon) {
+        // Label row
+        Row {
             Text(
-                text = ": ",
+                text = label,
+                style = MaterialTheme.typography.bodySmall,
+                fontWeight = FontWeight.Bold
+            )
+            if (showColon) {
+                Text(
+                    text = ":",
+                    style = MaterialTheme.typography.bodySmall
+                )
+            }
+        }
+
+        // Values - either 2 columns or single column
+        if (useColumns) {
+            val midPoint = (lines.size + 1) / 2
+            val leftColumn = lines.take(midPoint)
+            val rightColumn = lines.drop(midPoint)
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.Center
+            ) {
+                Column(
+                    modifier = Modifier.padding(end = 16.dp),
+                    horizontalAlignment = Alignment.Start
+                ) {
+                    leftColumn.forEach { line ->
+                        Text(
+                            text = line,
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                    }
+                }
+                Column(
+                    horizontalAlignment = Alignment.Start
+                ) {
+                    rightColumn.forEach { line ->
+                        Text(
+                            text = line,
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                    }
+                }
+            }
+        } else {
+            Text(
+                text = value,
                 style = MaterialTheme.typography.bodySmall
             )
         }
-        Text(
-            text = value,
-            modifier = Modifier.weight(2f),
-            style = MaterialTheme.typography.bodySmall
-        )
     }
 }
 

@@ -211,10 +211,20 @@ plugins/main/src/main/kotlin/app/aaps/plugins/main/profile/LocalProfileManagerIm
   - [x] Drawer → Profile now opens ProfileManagementScreen
 - [x] Handle navigation back from sub-screens
 
-### Phase 6: Testing & Polish
+### Phase 6: Testing & Polish (IN PROGRESS)
 - [ ] Test all flows
 - [ ] Handle protection checks
 - [ ] Verify legacy code still works (ProfileFragment, ProfileSwitchDialog)
+
+**Completed polish work:**
+- [x] ProfileManagementScreen: Carousel layout with profile cards and floating toolbar
+- [x] ProfileViewerContent: 2-column layout for values > 3 entries, centered
+- [x] ProfileViewerContent: Basal sum displayed above graph
+- [x] ProfileActivationScreen: Activate button in topbar with PlayArrow icon
+- [x] ProfileActivationScreen: TT separator hidden when TT option hidden
+- [x] NumberInputRow: Changed `unitLabel: String` to `unitLabelResId: Int` for type safety
+- [x] NumberInputRow: Auto-formats minutes as "Xh Ym" when value >= 60 and using units_min
+- [x] NumberInputRow: Removed `summary` parameter (cleaner API)
 
 ---
 
@@ -243,6 +253,12 @@ ui/src/.../compose/profileManagement/
 ui/src/.../compose/profileManagement/
 └── ProfileActivationScreen.kt                             # Activation full screen ✅
 app/src/.../compose/navigation/AppRoute.kt                 # Added ProfileActivation route ✅
+```
+
+### Phase 6 (Improvements)
+```
+core/ui/src/.../compose/NumberInputRow.kt                  # Updated: unitLabelResId, auto-format minutes ✅
+ui/src/.../compose/profileViewer/ProfileViewerContent.kt   # Updated: 2-column layout, basal sum above graph ✅
 ```
 
 ## Files to Modify
