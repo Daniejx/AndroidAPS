@@ -189,24 +189,27 @@ plugins/main/src/main/kotlin/app/aaps/plugins/main/profile/LocalProfileManagerIm
 - [x] Only handles editing single profile values
 - [x] Removed addNewProfile/cloneProfile/removeCurrentProfile from ViewModel
 
-### Phase 4: Profile Activation (Compose)
-- [ ] Create activation UI (bottom sheet or dialog)
-  - [ ] Duration input (0 = permanent)
-  - [ ] Percentage slider (30-200%)
-  - [ ] Timeshift slider (-12 to +12 hours)
-  - [ ] Optional TT checkbox
-  - [ ] Reuse button (when current has custom %)
-- [ ] Wire to ProfileFunction.createProfileSwitch()
+### Phase 4: Profile Activation (Compose) ✅ COMPLETE
+- [x] Create activation UI (full screen with navigation)
+  - [x] Duration input (0 = permanent, up to 7 days)
+  - [x] Percentage slider (30-250%)
+  - [x] Timeshift slider (-23 to +23 hours)
+  - [x] Optional TT checkbox (Activity target)
+  - [x] Reuse button (when current has custom %)
+  - [x] Notes input field
+  - [x] Confirmation dialog
+- [x] Wire to ProfileFunction.createProfileSwitch()
+- [x] Handle TT creation when withTT is enabled
 
-### Phase 5: Integration & Navigation (PARTIAL)
-- [ ] Wire Edit action → ProfileEditor
-- [ ] Wire Show action → ProfileViewer
+### Phase 5: Integration & Navigation ✅ COMPLETE
+- [x] Wire Edit action → ProfileEditor
+- [x] Wire Show action → ProfileViewer (embedded under carousel, inline display)
 - [x] Wire Activate action → ProfileSwitchDialog (existing)
 - [x] Updated ComposeMainActivity to show ProfileManagementScreen
   - [x] Injected ProfileManagementViewModel
   - [x] Replaced ProfileEditorScreen with ProfileManagementScreen for Profile route
   - [x] Drawer → Profile now opens ProfileManagementScreen
-- [ ] Handle navigation back from sub-screens
+- [x] Handle navigation back from sub-screens
 
 ### Phase 6: Testing & Polish
 - [ ] Test all flows
@@ -235,11 +238,11 @@ ui/src/.../compose/profileManagement/
 └── ProfileManagementViewModel.kt                          # ViewModel ✅
 ```
 
-## Files to Create (Remaining Phases)
-
+### Phase 4
 ```
 ui/src/.../compose/profileManagement/
-└── ProfileActivationSheet.kt                              # Activation bottom sheet (Phase 3)
+└── ProfileActivationScreen.kt                             # Activation full screen ✅
+app/src/.../compose/navigation/AppRoute.kt                 # Added ProfileActivation route ✅
 ```
 
 ## Files to Modify

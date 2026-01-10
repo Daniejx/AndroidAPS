@@ -239,7 +239,7 @@ private fun ExtendedBolusItem(
                     append(" ")
                     // Duration
                     append(T.msecs(extendedBolus.duration).mins().toInt().toString())
-                    append(rh.gs(R.string.unit_minute_short))
+                    append(rh.gs(app.aaps.core.keys.R.string.units_min))
                 },
                 modifier = Modifier.padding(start = 4.dp),
                 fontSize = 14.sp,

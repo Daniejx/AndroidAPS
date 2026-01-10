@@ -1,10 +1,16 @@
-package app.aaps.ui.compose.profileManagement
+package app.aaps.ui.compose.profileManagement.viewmodels
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import app.aaps.core.data.model.GlucoseUnit
 import app.aaps.core.data.model.PS
+import app.aaps.core.data.model.TT
 import app.aaps.core.data.time.T
+import app.aaps.core.data.ue.Action
+import app.aaps.core.data.ue.Sources
+import app.aaps.core.data.ue.ValueWithUnit
+import app.aaps.core.interfaces.configuration.Config
+import app.aaps.core.interfaces.db.PersistenceLayer
 import app.aaps.core.interfaces.logging.AAPSLogger
 import app.aaps.core.interfaces.logging.LTag
 import app.aaps.core.interfaces.plugin.ActivePlugin
@@ -16,6 +22,9 @@ import app.aaps.core.interfaces.profile.ProfileUtil
 import app.aaps.core.interfaces.profile.ProfileValidationError
 import app.aaps.core.interfaces.profile.PureProfile
 import app.aaps.core.interfaces.resources.ResourceHelper
+import app.aaps.core.interfaces.utils.HardLimits
+import app.aaps.core.keys.interfaces.Preferences
+import app.aaps.core.keys.UnitDoubleKey
 import app.aaps.core.interfaces.rx.AapsSchedulers
 import app.aaps.core.interfaces.rx.bus.RxBus
 import app.aaps.core.interfaces.rx.events.EventLocalProfileChanged
@@ -24,6 +33,7 @@ import app.aaps.core.interfaces.utils.DateUtil
 import app.aaps.core.interfaces.utils.DecimalFormatter
 import app.aaps.core.objects.extensions.pureProfileFromJson
 import app.aaps.core.objects.profile.ProfileSealed
+import app.aaps.core.ui.R
 import io.reactivex.rxjava3.disposables.CompositeDisposable
 import io.reactivex.rxjava3.kotlin.plusAssign
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -33,6 +43,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.json.JSONObject
 import java.util.TimeZone
+import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
 /**
@@ -48,7 +59,11 @@ class ProfileManagementViewModel @Inject constructor(
     private val aapsLogger: AAPSLogger,
     private val activePlugin: ActivePlugin,
     val profileUtil: ProfileUtil,
-    val decimalFormatter: DecimalFormatter
+    val decimalFormatter: DecimalFormatter,
+    private val persistenceLayer: PersistenceLayer,
+    private val config: Config,
+    private val hardLimits: HardLimits,
+    private val preferences: Preferences
 ) : ViewModel() {
 
     private val disposable = CompositeDisposable()
@@ -97,7 +112,7 @@ class ProfileManagementViewModel @Inject constructor(
                     val savedIndex = localProfileManager.currentProfileIndex
                     localProfileManager.currentProfileIndex = index
                     val errors = localProfileManager.validateProfileStructured()
-                        .filter { it.type != ProfileErrorType.NAME || it.message != rh.gs(app.aaps.core.ui.R.string.profile_name_contains_dot) }
+                        .filter { it.type != ProfileErrorType.NAME || it.message != rh.gs(R.string.profile_name_contains_dot) }
                     localProfileManager.currentProfileIndex = savedIndex
                     errors
                 }
@@ -231,8 +246,127 @@ class ProfileManagementViewModel @Inject constructor(
     fun getIsfList(profile: ProfileSealed): String = profile.getIsfList(rh, dateUtil)
     fun getBasalList(profile: ProfileSealed): String = profile.getBasalList(rh, dateUtil)
     fun getTargetList(profile: ProfileSealed): String = profile.getTargetList(rh, dateUtil)
-    fun formatDia(dia: Double): String = rh.gs(app.aaps.core.ui.R.string.format_hours, dia)
-    fun formatBasalSum(basalSum: Double): String = decimalFormatter.to2Decimal(basalSum) + " " + rh.gs(app.aaps.core.ui.R.string.insulin_unit_shortname)
+    fun formatDia(dia: Double): String = rh.gs(R.string.format_hours, dia)
+    fun formatBasalSum(basalSum: Double): String = decimalFormatter.to2Decimal(basalSum) + " " + rh.gs(R.string.insulin_unit_shortname)
+
+    /**
+     * Get reuse values from current active profile if it has custom percentage/timeshift
+     */
+    fun getReuseValues(): Pair<Int, Int>? {
+        val profile = profileFunction.getProfile()
+        if (profile is ProfileSealed.EPS) {
+            val percentage = profile.value.originalPercentage
+            val timeshiftHours = T.msecs(profile.value.originalTimeshift).hours().toInt()
+            if (percentage != 100 || timeshiftHours != 0) {
+                return Pair(percentage, timeshiftHours)
+            }
+        }
+        return null
+    }
+
+    /**
+     * Activate a profile with optional percentage, timeshift, and duration.
+     *
+     * @param profileIndex Index of the profile to activate
+     * @param durationMinutes Duration in minutes (0 = permanent)
+     * @param percentage Percentage (100 = no change)
+     * @param timeshiftHours Timeshift in hours (0 = no change)
+     * @param withTT Whether to create an Activity TT
+     * @param notes Optional notes
+     * @return true if activation was successful
+     */
+    fun activateProfile(
+        profileIndex: Int,
+        durationMinutes: Int,
+        percentage: Int,
+        timeshiftHours: Int,
+        withTT: Boolean,
+        notes: String
+    ): Boolean {
+        val profiles = uiState.value.profiles
+        if (profileIndex !in profiles.indices) {
+            aapsLogger.error(LTag.UI, "Invalid profile index: $profileIndex")
+            return false
+        }
+
+        val profileName = profiles[profileIndex].name
+        val profileStore = activePlugin.activeProfileSource.profile ?: run {
+            aapsLogger.error(LTag.UI, "No profile store available")
+            return false
+        }
+
+        // Validate profile before activation
+        val pureProfile = profileStore.getSpecificProfile(profileName) ?: run {
+            aapsLogger.error(LTag.UI, "Profile not found in store: $profileName")
+            return false
+        }
+
+        val profileSealed = ProfileSealed.Pure(pureProfile, activePlugin)
+        val validity = profileSealed.isValid(
+            rh.gs(R.string.careportal_profileswitch),
+            activePlugin.activePump,
+            config,
+            rh,
+            rxBus,
+            hardLimits,
+            false
+        )
+
+        if (!validity.isValid) {
+            aapsLogger.error(LTag.UI, "Profile validation failed: ${validity.reasons}")
+            return false
+        }
+
+        val timestamp = dateUtil.now()
+        val success = profileFunction.createProfileSwitch(
+            profileStore = profileStore,
+            profileName = profileName,
+            durationInMinutes = durationMinutes,
+            percentage = percentage,
+            timeShiftInHours = timeshiftHours,
+            timestamp = timestamp,
+            action = Action.PROFILE_SWITCH,
+            source = Sources.ProfileSwitchDialog,
+            note = notes.ifBlank { null },
+            listValues = listOfNotNull(
+                ValueWithUnit.SimpleString(profileName),
+                ValueWithUnit.Percent(percentage),
+                ValueWithUnit.Hour(timeshiftHours).takeIf { timeshiftHours != 0 },
+                ValueWithUnit.Minute(durationMinutes).takeIf { durationMinutes != 0 }
+            )
+        )
+
+        if (success && withTT && durationMinutes > 0 && percentage < 100) {
+            // Create Activity TT
+            val target = preferences.get(UnitDoubleKey.OverviewActivityTarget)
+            val units = profileFunction.getUnits()
+            viewModelScope.launch {
+                persistenceLayer.insertAndCancelCurrentTemporaryTarget(
+                    TT(
+                        timestamp = timestamp + 10000, // Add ten secs for proper NSCv1 sync
+                        duration = TimeUnit.MINUTES.toMillis(durationMinutes.toLong()),
+                        reason = TT.Reason.ACTIVITY,
+                        lowTarget = profileUtil.convertToMgdl(target, units),
+                        highTarget = profileUtil.convertToMgdl(target, units)
+                    ),
+                    action = Action.TT,
+                    source = Sources.TTDialog,
+                    note = null,
+                    listValues = listOfNotNull(
+                        ValueWithUnit.TETTReason(TT.Reason.ACTIVITY),
+                        ValueWithUnit.fromGlucoseUnit(target, units),
+                        ValueWithUnit.Minute(durationMinutes)
+                    )
+                )
+            }
+        }
+
+        if (success) {
+            loadData() // Refresh UI after activation
+        }
+
+        return success
+    }
 }
 
 /**

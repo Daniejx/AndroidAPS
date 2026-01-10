@@ -1,4 +1,4 @@
-package app.aaps.ui.compose.profileSwitch
+package app.aaps.ui.compose.treatments
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
@@ -40,6 +40,7 @@ import app.aaps.core.data.ue.Action
 import app.aaps.core.data.ue.Sources
 import app.aaps.core.data.ue.ValueWithUnit
 import app.aaps.core.interfaces.logging.UserEntryLogger
+import app.aaps.core.interfaces.plugin.ActivePlugin
 import app.aaps.core.interfaces.resources.ResourceHelper
 import app.aaps.core.interfaces.utils.DateUtil
 import app.aaps.core.interfaces.utils.DecimalFormatter
@@ -53,8 +54,7 @@ import app.aaps.core.ui.compose.icons.Pump
 import app.aaps.ui.R
 import app.aaps.ui.compose.components.ContentContainer
 import app.aaps.ui.compose.components.ErrorSnackbar
-import app.aaps.ui.compose.profileSwitch.viewmodels.ProfileSwitchViewModel
-import app.aaps.ui.compose.treatments.TreatmentLazyColumn
+import app.aaps.ui.compose.treatments.viewmodels.ProfileSwitchViewModel
 
 /**
  * Composable screen displaying profile switches with delete and show hidden functionality.
@@ -70,7 +70,7 @@ import app.aaps.ui.compose.treatments.TreatmentLazyColumn
 @Composable
 fun ProfileSwitchScreen(
     viewModel: ProfileSwitchViewModel,
-    activePlugin: app.aaps.core.interfaces.plugin.ActivePlugin,
+    activePlugin: ActivePlugin,
     decimalFormatter: DecimalFormatter,
     uel: UserEntryLogger,
     setToolbarConfig: (ToolbarConfig) -> Unit,
@@ -271,7 +271,7 @@ private fun ProfileSwitchItem(
                     if (profileSwitch.duration != null && profileSwitch.duration != 0L) {
                         append(" ")
                         append(T.msecs(profileSwitch.duration ?: 0L).mins().toInt())
-                        append(rh.gs(R.string.unit_minute_short))
+                        append(rh.gs(app.aaps.core.keys.R.string.units_min))
                     }
                 },
                 modifier = Modifier.padding(start = 4.dp),

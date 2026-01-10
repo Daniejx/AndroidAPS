@@ -8,7 +8,6 @@
     <string name="start_eating_soon_tt">Start Eating soon TT</string>
     <string name="start_hypo_tt">Start Hypo TT</string>
     <string name="time_offset">Time offset</string>
-    <string name="unit_minute_short">min</string>
     <string name="remind_to_bolus_later">Remind to bolus later</string>
 
     <string name="a11y_carb_reminder">set reminder</string>
@@ -72,6 +71,7 @@
     <string name="reuse_profile_pct_hours">Reuse %1$d%% %2$dh</string>
     <string name="timeshift_label">Time shift</string>
     <string name="percentage_label">Percentage</string>
+    <string name="permanent_profile_switch">Permanent (0 = no duration limit)</string>
 
     <!-- LoopDialog -->
     <string name="suspendloopfor1h">Suspend loop for 1h</string>

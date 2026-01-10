@@ -1,4 +1,4 @@
-package app.aaps.ui.compose.profileSwitch.viewmodels
+package app.aaps.ui.compose.treatments.viewmodels
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope

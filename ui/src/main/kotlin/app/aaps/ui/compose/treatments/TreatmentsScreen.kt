@@ -41,7 +41,6 @@ import app.aaps.core.ui.compose.icons.TempBasal
 import app.aaps.core.ui.compose.icons.TempTarget
 import app.aaps.core.ui.compose.icons.UserEntry
 import app.aaps.ui.R
-import app.aaps.ui.compose.profileSwitch.ProfileSwitchScreen
 import app.aaps.ui.compose.treatments.viewmodels.TreatmentsViewModel
 import kotlinx.coroutines.launch
 

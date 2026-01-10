@@ -17,36 +17,39 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import java.text.DecimalFormat
+import kotlin.math.roundToInt
 
 /**
  * Composable that displays a numeric input with label, current value, and Material 3 slider.
- * Used for inputting profile calculation parameters like age, TDD, weight, and basal percentage.
+ * Used for inputting numeric parameters with optional unit display and formatting.
  *
  * **Layout:**
  * ```
- * Label                    42
+ * Label                    42 min
+ * Optional summary text
  * ──────○────────────────
  * ```
  *
  * The component displays:
- * - Top row: Label (left, labelLarge) and current value (right, titleMedium bold in primary color, clickable)
+ * - Top row: Label (left, labelLarge) and current value with unit (right, titleMedium bold in primary color, clickable)
+ * - Optional: Summary text below label (bodySmall, onSurfaceVariant)
  * - Bottom: Material 3 Slider with +/- buttons
  * - Clicking on value opens a dialog for direct input
  *
- * **Value Display:**
- * - Value is displayed as an integer (decimal portion is truncated)
- * - Slider supports fractional values, but display shows whole numbers only
- * - Suitable for parameters that are conceptually integers (age, weight) or where decimals aren't needed in display
- *
- * @param label Display label for the input (e.g., "Age", "TDD", "Weight")
- * @param value Current numeric value (can be fractional, displayed as integer)
+ * @param label Display label for the input (e.g., "Duration", "Percentage")
+ * @param value Current numeric value
  * @param onValueChange Callback invoked when slider value changes, receives new value as Double
  * @param minValue Minimum allowed value for the slider range
  * @param maxValue Maximum allowed value for the slider range
  * @param step Step increment for slider (determines number of discrete positions)
+ * @param unitLabel Optional unit label displayed after value (e.g., "min", "%", "h")
+ * @param decimalPlaces Number of decimal places for value display (0 = integer, default)
+ * @param summary Optional summary/description text shown below the label
+ * @param valueFormatResId Optional resource ID for formatted value display (e.g., R.string.format_mins for "%1$d min")
  * @param modifier Modifier for the root Column container
  */
 @Composable
@@ -57,10 +60,30 @@ fun NumberInputRow(
     minValue: Double,
     maxValue: Double,
     step: Double,
+    unitLabel: String = "",
+    decimalPlaces: Int = 0,
+    summary: String? = null,
+    valueFormatResId: Int? = null,
     modifier: Modifier = Modifier
 ) {
     var showDialog by remember { mutableStateOf(false) }
-    val valueFormat = remember { DecimalFormat("0") }
+    val valueFormat = remember(decimalPlaces) {
+        if (decimalPlaces == 0) DecimalFormat("0")
+        else DecimalFormat("0.${"0".repeat(decimalPlaces)}")
+    }
+
+    // Format the displayed value
+    val displayText = when {
+        valueFormatResId != null -> {
+            if (decimalPlaces == 0) {
+                stringResource(valueFormatResId, value.roundToInt())
+            } else {
+                stringResource(valueFormatResId, value)
+            }
+        }
+        unitLabel.isNotEmpty() -> "${valueFormat.format(value)} $unitLabel"
+        else -> valueFormat.format(value)
+    }
 
     Column(
         modifier = modifier
@@ -78,11 +101,19 @@ fun NumberInputRow(
                 color = MaterialTheme.colorScheme.onSurface
             )
             Text(
-                text = value.toInt().toString(),
+                text = displayText,
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.clickable { showDialog = true }
+            )
+        }
+        if (summary != null) {
+            Text(
+                text = summary,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(top = 2.dp)
             )
         }
         Spacer(modifier = Modifier.height(4.dp))
@@ -101,6 +132,8 @@ fun NumberInputRow(
             valueRange = minValue..maxValue,
             step = step,
             label = label,
+            summary = summary,
+            unitLabel = unitLabel,
             valueFormat = valueFormat,
             onValueConfirm = onValueChange,
             onDismiss = { showDialog = false }

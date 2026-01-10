@@ -59,6 +59,7 @@ import app.aaps.core.ui.compose.AapsTheme
 import app.aaps.core.ui.compose.OkCancelDialog
 import app.aaps.ui.R
 import app.aaps.ui.compose.components.ContentContainer
+import app.aaps.ui.compose.profileManagement.viewmodels.ProfileManagementViewModel
 import app.aaps.ui.compose.profileViewer.ProfileSingleContent
 import kotlin.math.absoluteValue
 
@@ -69,7 +70,6 @@ import kotlin.math.absoluteValue
  * @param viewModel ViewModel managing profile state and operations
  * @param onNavigateBack Callback to navigate back
  * @param onEditProfile Callback when user wants to edit a profile (receives profile index)
- * @param onShowProfile Callback when user wants to view a profile (receives profile index)
  * @param onActivateProfile Callback when user wants to activate a profile (receives profile index)
  */
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
@@ -78,7 +78,6 @@ fun ProfileManagementScreen(
     viewModel: ProfileManagementViewModel,
     onNavigateBack: () -> Unit = {},
     onEditProfile: (Int) -> Unit = {},
-    onShowProfile: (Int) -> Unit = {},
     onActivateProfile: (Int) -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -350,7 +349,7 @@ fun ProfileManagementScreen(
                         Icon(
                             imageVector = Icons.Filled.PlayArrow,
                             contentDescription = stringResource(R.string.activate_label),
-                            tint = Color(AapsTheme.generalColors.activeInsulinText.value)
+                            tint = MaterialTheme.colorScheme.onPrimaryContainer
                         )
                     }
                 }

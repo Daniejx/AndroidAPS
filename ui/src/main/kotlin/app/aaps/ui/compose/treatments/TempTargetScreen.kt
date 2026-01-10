@@ -223,7 +223,7 @@ private fun TempTargetItem(
                     append(" ")
                     // Duration
                     append(T.msecs(tempTarget.duration).mins().toInt())
-                    append(rh.gs(R.string.unit_minute_short))
+                    append(rh.gs(app.aaps.core.keys.R.string.units_min))
                     append(" ")
                     // Reason (without "Reason:" label)
                     append(translator.translate(tempTarget.reason))

@@ -446,10 +446,42 @@ fun DefaultProfileContent(
 ) {
     Column(modifier = modifier) {
         Text(text = stringResource(R.string.profile_parameters), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(bottom = 16.dp))
-        NumberInputRow(label = stringResource(R.string.age), value = age.toDouble(), onValueChange = { onAgeChange(it.toInt()) }, minValue = 1.0, maxValue = 99.0, step = 1.0)
-        if (showTdd) NumberInputRow(label = stringResource(app.aaps.core.ui.R.string.tdd_total), value = tdd, onValueChange = onTddChange, minValue = 0.0, maxValue = 200.0, step = 1.0)
-        if (showWeight) NumberInputRow(label = stringResource(R.string.weight_label), value = weight, onValueChange = onWeightChange, minValue = 0.0, maxValue = 150.0, step = 1.0)
-        if (showPct) NumberInputRow(label = stringResource(R.string.basal_pct_from_tdd_label), value = pct, onValueChange = onPctChange, minValue = 32.0, maxValue = 37.0, step = 1.0)
+        NumberInputRow(
+            label = stringResource(R.string.age),
+            value = age.toDouble(),
+            onValueChange = { onAgeChange(it.toInt()) },
+            minValue = 1.0,
+            maxValue = 99.0,
+            step = 1.0,
+            unitLabel = stringResource(app.aaps.core.keys.R.string.units_years)
+        )
+        if (showTdd) NumberInputRow(
+            label = stringResource(app.aaps.core.ui.R.string.tdd_total),
+            value = tdd,
+            onValueChange = onTddChange,
+            minValue = 0.0,
+            maxValue = 200.0,
+            step = 1.0,
+            unitLabel = stringResource(app.aaps.core.keys.R.string.units_insulin)
+        )
+        if (showWeight) NumberInputRow(
+            label = stringResource(R.string.weight_label),
+            value = weight,
+            onValueChange = onWeightChange,
+            minValue = 0.0,
+            maxValue = 150.0,
+            step = 1.0,
+            unitLabel = stringResource(app.aaps.core.keys.R.string.units_kg)
+        )
+        if (showPct) NumberInputRow(
+            label = stringResource(R.string.basal_pct_from_tdd_label),
+            value = pct,
+            onValueChange = onPctChange,
+            minValue = 32.0,
+            maxValue = 37.0,
+            step = 1.0,
+            unitLabel = stringResource(app.aaps.core.keys.R.string.units_percent)
+        )
     }
 }
 

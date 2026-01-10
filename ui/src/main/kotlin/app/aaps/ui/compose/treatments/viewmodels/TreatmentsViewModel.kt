@@ -14,7 +14,6 @@ import app.aaps.core.interfaces.userEntry.UserEntryPresentationHelper
 import app.aaps.core.interfaces.utils.DateUtil
 import app.aaps.core.interfaces.utils.DecimalFormatter
 import app.aaps.core.interfaces.utils.Translator
-import app.aaps.ui.compose.profileSwitch.viewmodels.ProfileSwitchViewModel
 import javax.inject.Inject
 
 /**
