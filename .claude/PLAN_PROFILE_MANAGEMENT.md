@@ -179,12 +179,15 @@ plugins/main/src/main/kotlin/app/aaps/plugins/main/profile/LocalProfileManagerIm
 - [x] Created `ActiveProfileDetails` composable for displaying active profile info
 - [x] Created `DetailChip` composable for label+value display
 
-### Phase 3: Simplify ProfileEditor
-- [ ] Remove profile list management from ProfileEditorScreen
-  - [ ] Remove ProfileHeader with add/clone/delete
-  - [ ] Remove profile dropdown
-- [ ] ProfileEditor receives profile index/name as parameter
-- [ ] Only handles editing single profile values
+### Phase 3: Simplify ProfileEditor ✅ COMPLETE
+- [x] Remove profile list management from ProfileEditorScreen
+  - [x] Remove ProfileHeader with add/clone/delete
+  - [x] Remove profile dropdown
+  - [x] Add simplified ProfileNameHeader (name editing + units)
+  - [x] Add UnsavedChangesDialog on back press
+- [x] ProfileEditor receives profile index as parameter (via selectProfile)
+- [x] Only handles editing single profile values
+- [x] Removed addNewProfile/cloneProfile/removeCurrentProfile from ViewModel
 
 ### Phase 4: Profile Activation (Compose)
 - [ ] Create activation UI (bottom sheet or dialog)

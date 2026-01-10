@@ -17,18 +17,13 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.ContentCopy
-import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalButton
@@ -42,6 +37,7 @@ import androidx.compose.material3.PrimaryTabRow
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -65,8 +61,6 @@ import app.aaps.core.graph.IsfProfileGraphCompose
 import app.aaps.core.graph.TargetBgProfileGraphCompose
 import app.aaps.core.interfaces.profile.ProfileErrorType
 import app.aaps.core.objects.profile.ProfileSealed
-import app.aaps.core.ui.compose.OkCancelDialog
-import app.aaps.core.ui.compose.OkDialog
 import app.aaps.core.ui.compose.SliderWithButtons
 import app.aaps.core.ui.compose.ValueInputDialog
 import app.aaps.plugins.main.R
@@ -81,12 +75,40 @@ fun ProfileEditorScreen(
 ) {
     val state by viewModel.uiState.collectAsState()
 
+    // Unsaved changes dialog
+    var showUnsavedChangesDialog by remember { mutableStateOf(false) }
+
+    if (showUnsavedChangesDialog) {
+        UnsavedChangesDialog(
+            onSave = {
+                viewModel.saveProfile()
+                showUnsavedChangesDialog = false
+                onBackClick()
+            },
+            onDiscard = {
+                viewModel.resetProfile()
+                showUnsavedChangesDialog = false
+                onBackClick()
+            },
+            onCancel = { showUnsavedChangesDialog = false }
+        )
+    }
+
+    // Handle back navigation with unsaved changes check
+    val handleBack: () -> Unit = {
+        if (state.isEdited) {
+            showUnsavedChangesDialog = true
+        } else {
+            onBackClick()
+        }
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { Text(stringResource(app.aaps.core.ui.R.string.localprofile)) },
                 navigationIcon = {
-                    IconButton(onClick = onBackClick) {
+                    IconButton(onClick = handleBack) {
                         Icon(
                             Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = stringResource(app.aaps.core.ui.R.string.back)
@@ -168,28 +190,11 @@ fun ProfileEditorScreen(
                     .verticalScroll(rememberScrollState())
                     .padding(horizontal = 16.dp, vertical = 8.dp)
             ) {
-                // Profile header with editable name and profile switcher
-                ProfileHeader(
-                    profiles = state.profiles,
-                    currentIndex = state.currentProfileIndex,
+                // Profile name header with edit capability
+                ProfileNameHeader(
                     profileName = state.currentProfile?.name ?: "",
-                    onProfileSelect = { viewModel.selectProfile(it) },
-                    onForceProfileSelect = { viewModel.forceSelectProfile(it) },
                     onProfileNameChange = { viewModel.updateProfileName(it) },
-                    onAddProfile = { viewModel.addNewProfile() },
-                    onCloneProfile = { viewModel.cloneProfile() },
-                    onRemoveProfile = { viewModel.removeCurrentProfile() },
-                    isEdited = state.isEdited
-                )
-
-                Spacer(Modifier.height(8.dp))
-
-                // Units display
-                Text(
-                    text = "${stringResource(R.string.units_colon)} ${state.units}",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(vertical = 4.dp)
+                    units = state.units
                 )
 
                 Spacer(Modifier.height(12.dp))
@@ -310,69 +315,21 @@ fun ProfileEditorScreen(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun ProfileHeader(
-    profiles: List<String>,
-    currentIndex: Int,
+private fun ProfileNameHeader(
     profileName: String,
-    onProfileSelect: (Int) -> Unit,
-    onForceProfileSelect: (Int) -> Unit,
     onProfileNameChange: (String) -> Unit,
-    onAddProfile: () -> Unit,
-    onCloneProfile: () -> Unit,
-    onRemoveProfile: () -> Unit,
-    isEdited: Boolean
+    units: String
 ) {
-    var expanded by remember { mutableStateOf(false) }
     var isEditingName by remember { mutableStateOf(false) }
     var editedName by remember(profileName) { mutableStateOf(profileName) }
     val focusRequester = remember { FocusRequester() }
-
-    // Dialog states
-    var showDeleteConfirmation by remember { mutableStateOf(false) }
-    var showSwitchConfirmation by remember { mutableStateOf<Int?>(null) }
-    var showEditedWarning by remember { mutableStateOf<String?>(null) } // "add" or "clone"
 
     // Request focus when entering edit mode
     LaunchedEffect(isEditingName) {
         if (isEditingName) {
             focusRequester.requestFocus()
         }
-    }
-
-    // Delete confirmation dialog
-    if (showDeleteConfirmation) {
-        OkCancelDialog(
-            title = stringResource(R.string.delete_current_profile),
-            message = profileName,
-            onConfirm = {
-                onRemoveProfile()
-                showDeleteConfirmation = false
-            },
-            onDismiss = { showDeleteConfirmation = false }
-        )
-    }
-
-    // Switch profile confirmation (when edited)
-    showSwitchConfirmation?.let { targetIndex ->
-        OkCancelDialog(
-            message = stringResource(R.string.do_you_want_switch_profile),
-            onConfirm = {
-                onForceProfileSelect(targetIndex)
-                showSwitchConfirmation = null
-            },
-            onDismiss = { showSwitchConfirmation = null }
-        )
-    }
-
-    // Warning when trying to add/clone while edited
-    if (showEditedWarning != null) {
-        OkDialog(
-            title = "",
-            message = stringResource(R.string.save_or_reset_changes_first),
-            onDismiss = { showEditedWarning = null }
-        )
     }
 
     if (isEditingName) {
@@ -415,7 +372,8 @@ private fun ProfileHeader(
     } else {
         Row(
             modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
         ) {
             // Profile name with edit icon
             Row(
@@ -442,82 +400,43 @@ private fun ProfileHeader(
                 )
             }
 
-            Spacer(Modifier.width(8.dp))
-
-            // Profile switcher dropdown
-            Box {
-                IconButton(onClick = { expanded = true }) {
-                    Icon(
-                        imageVector = Icons.Default.ArrowDropDown,
-                        contentDescription = stringResource(R.string.switch_profile),
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-                DropdownMenu(
-                    expanded = expanded,
-                    onDismissRequest = { expanded = false }
-                ) {
-                    profiles.forEachIndexed { index, profile ->
-                        DropdownMenuItem(
-                            text = { Text(profile) },
-                            onClick = {
-                                expanded = false
-                                if (index != currentIndex) {
-                                    if (isEdited) {
-                                        showSwitchConfirmation = index
-                                    } else {
-                                        onProfileSelect(index)
-                                    }
-                                }
-                            },
-                            leadingIcon = if (index == currentIndex) {
-                                { Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(18.dp)) }
-                            } else null
-                        )
-                    }
-                }
-            }
-
-            // Add profile
-            IconButton(onClick = {
-                if (isEdited) {
-                    showEditedWarning = "add"
-                } else {
-                    onAddProfile()
-                }
-            }) {
-                Icon(
-                    imageVector = Icons.Default.Add,
-                    contentDescription = stringResource(R.string.a11y_add_new_profile),
-                    tint = MaterialTheme.colorScheme.primary
-                )
-            }
-
-            // Clone profile
-            IconButton(onClick = {
-                if (isEdited) {
-                    showEditedWarning = "clone"
-                } else {
-                    onCloneProfile()
-                }
-            }) {
-                Icon(
-                    imageVector = Icons.Default.ContentCopy,
-                    contentDescription = stringResource(R.string.a11y_clone_profile),
-                    tint = MaterialTheme.colorScheme.primary
-                )
-            }
-
-            // Remove profile
-            IconButton(onClick = { showDeleteConfirmation = true }) {
-                Icon(
-                    imageVector = Icons.Default.Delete,
-                    contentDescription = stringResource(R.string.a11y_delete_current_profile),
-                    tint = MaterialTheme.colorScheme.error
-                )
-            }
+            // Units display
+            Text(
+                text = "${stringResource(R.string.units_colon)} $units",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
         }
     }
+}
+
+@Composable
+private fun UnsavedChangesDialog(
+    onSave: () -> Unit,
+    onDiscard: () -> Unit,
+    onCancel: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onCancel,
+        title = { Text(stringResource(R.string.unsaved_changes)) },
+        text = { Text(stringResource(R.string.unsaved_changes_message)) },
+        confirmButton = {
+            FilledTonalButton(onClick = onSave) {
+                Text(stringResource(app.aaps.core.ui.R.string.save))
+            }
+        },
+        dismissButton = {
+            Row {
+                TextButton(onClick = onCancel) {
+                    Text(stringResource(app.aaps.core.ui.R.string.cancel))
+                }
+                Spacer(Modifier.width(8.dp))
+                TextButton(onClick = onDiscard) {
+                    Text(stringResource(R.string.discard))
+                }
+            }
+        }
+    )
 }
 
 @Composable

@@ -153,16 +153,11 @@ class ProfileEditorViewModel @Inject constructor(
         _uiState.update { it.copy(selectedTab = index) }
     }
 
+    /**
+     * Select a profile by index for editing.
+     * Called when navigating to the editor from ProfileManagementScreen.
+     */
     fun selectProfile(index: Int) {
-        if (profilePlugin.isEdited) {
-            // Show confirmation dialog - handled by UI
-            return
-        }
-        profilePlugin.currentProfileIndex = index
-        loadState()
-    }
-
-    fun forceSelectProfile(index: Int) {
         profilePlugin.currentProfileIndex = index
         profilePlugin.isEdited = false
         loadState()
@@ -325,29 +320,6 @@ class ProfileEditorViewModel @Inject constructor(
 
     private fun markEdited() {
         profilePlugin.isEdited = true
-        loadState()
-    }
-
-    fun addNewProfile() {
-        if (profilePlugin.isEdited) {
-            // Show dialog first
-            return
-        }
-        profilePlugin.addNewProfile()
-        loadState()
-    }
-
-    fun cloneProfile() {
-        if (profilePlugin.isEdited) {
-            // Show dialog first
-            return
-        }
-        profilePlugin.cloneProfile()
-        loadState()
-    }
-
-    fun removeCurrentProfile() {
-        profilePlugin.removeCurrentProfile()
         loadState()
     }
 

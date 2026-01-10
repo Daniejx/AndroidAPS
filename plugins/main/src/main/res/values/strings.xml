@@ -149,6 +149,9 @@
     <string name="target_high_label">High</string>
     <string name="edit_profile_name">Edit profile name</string>
     <string name="switch_profile">Switch profile</string>
+    <string name="unsaved_changes">Unsaved changes</string>
+    <string name="unsaved_changes_message">You have unsaved changes. What would you like to do?</string>
+    <string name="discard">Discard</string>
 
     <!-- Actions -->
     <string name="actions">Actions</string>
