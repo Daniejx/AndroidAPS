@@ -51,7 +51,7 @@ import app.aaps.core.ui.compose.AapsTheme
 @Composable
 fun ActionsScreen(
     viewModel: ActionsViewModel,
-    onProfileSwitchClick: () -> Unit,
+    onProfileManagementClick: () -> Unit,
     onTempTargetClick: () -> Unit,
     onTempBasalClick: () -> Unit,
     onExtendedBolusClick: () -> Unit,
@@ -88,7 +88,6 @@ fun ActionsScreen(
 
         // Quick Actions Section
         QuickActionsSection(
-            showProfileSwitch = state.showProfileSwitch,
             showTempTarget = state.showTempTarget,
             showTempBasal = state.showTempBasal,
             showCancelTempBasal = state.showCancelTempBasal,
@@ -96,7 +95,7 @@ fun ActionsScreen(
             showCancelExtendedBolus = state.showCancelExtendedBolus,
             cancelTempBasalText = state.cancelTempBasalText,
             cancelExtendedBolusText = state.cancelExtendedBolusText,
-            onProfileSwitchClick = onProfileSwitchClick,
+            onProfileSwitchClick = onProfileManagementClick,
             onTempTargetClick = onTempTargetClick,
             onTempBasalClick = onTempBasalClick,
             onCancelTempBasalClick = {
@@ -292,7 +291,6 @@ private fun StatusValueWithProgress(
 
 @Composable
 private fun QuickActionsSection(
-    showProfileSwitch: Boolean,
     showTempTarget: Boolean,
     showTempBasal: Boolean,
     showCancelTempBasal: Boolean,
@@ -307,8 +305,8 @@ private fun QuickActionsSection(
     onExtendedBolusClick: () -> Unit,
     onCancelExtendedBolusClick: () -> Unit
 ) {
-    val hasAnyAction = showProfileSwitch || showTempTarget || showTempBasal ||
-        showCancelTempBasal || showExtendedBolus || showCancelExtendedBolus
+    // Profile Management is always visible, so section always has at least one action
+    val hasAnyAction = true
 
     AnimatedVisibility(
         visible = hasAnyAction,
@@ -333,21 +331,17 @@ private fun QuickActionsSection(
                     color = MaterialTheme.colorScheme.onSurface
                 )
 
-                // Row 1: Profile Switch | Temp Target
+                // Row 1: Profile Management | Temp Target
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    if (showProfileSwitch) {
-                        TileButton(
-                            text = stringResource(app.aaps.core.ui.R.string.careportal_profileswitch),
-                            iconRes = app.aaps.core.ui.R.drawable.ic_actions_profileswitch,
-                            onClick = onProfileSwitchClick,
-                            modifier = Modifier.weight(1f)
-                        )
-                    } else {
-                        Spacer(modifier = Modifier.weight(1f))
-                    }
+                    TileButton(
+                        text = stringResource(app.aaps.core.ui.R.string.profile_management),
+                        iconRes = app.aaps.core.ui.R.drawable.ic_actions_profileswitch,
+                        onClick = onProfileSwitchClick,
+                        modifier = Modifier.weight(1f)
+                    )
                     if (showTempTarget) {
                         TileButton(
                             text = stringResource(app.aaps.core.ui.R.string.temporary_target),

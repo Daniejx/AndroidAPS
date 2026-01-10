@@ -117,13 +117,6 @@ class ActionsViewModel @Inject constructor(
             val isLoopRunning = loop.runningMode.isLoopRunning()
             val isPatchPump = pumpDescription.isPatchPump
 
-            // Profile switch visibility
-            val showProfileSwitch = activePlugin.activeProfileSource.profile != null &&
-                pumpDescription.isSetBasalProfileCapable &&
-                isInitialized &&
-                !isDisconnected &&
-                !isSuspended
-
             // Extended bolus visibility
             val showExtendedBolus: Boolean
             val showCancelExtendedBolus: Boolean
@@ -189,7 +182,6 @@ class ActionsViewModel @Inject constructor(
 
             _uiState.update { state ->
                 state.copy(
-                    showProfileSwitch = showProfileSwitch,
                     showTempTarget = profile != null && isLoopRunning,
                     showTempBasal = showTempBasal,
                     showCancelTempBasal = showCancelTempBasal,

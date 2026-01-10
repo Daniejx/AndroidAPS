@@ -17,6 +17,8 @@ import androidx.compose.ui.graphics.Color
  * - calculator: Green - Bolus calculator icon and related elements
  * - future: Green - Future/scheduled items color
  * - invalidated: Red - Invalid/deleted items color
+ * - inProgress: Amber - Items with temporary modifications (e.g., profile with percentage/timeshift)
+ * - onInProgress: Dark text color for use on inProgress background
  *
  * Colors match the existing theme attribute colors for consistency with the rest of the app.
  *
@@ -24,6 +26,8 @@ import androidx.compose.ui.graphics.Color
  * @property calculator Color for calculator icon and elements
  * @property futureRecord Color for future/scheduled items
  * @property invalidatedRecord Color for invalid/deleted items
+ * @property inProgress Color for items with temporary modifications (matches ribbonWarningColor)
+ * @property onInProgress Text color for use on inProgress background (matches ribbonTextWarningColor)
  */
 data class GeneralColors(
     val activeInsulinText: Color,
@@ -32,7 +36,9 @@ data class GeneralColors(
     val invalidatedRecord: Color,
     val statusNormal: Color,
     val statusWarning: Color,
-    val statusCritical: Color
+    val statusCritical: Color,
+    val inProgress: Color,
+    val onInProgress: Color
 )
 
 /**
@@ -46,7 +52,9 @@ internal val LightGeneralColors = GeneralColors(
     invalidatedRecord = Color(0xFFE53935),   // red for invalid/deleted items
     statusNormal = Color(0xFF4CAF50),        // green for normal status
     statusWarning = Color(0xFFFFC107),       // amber for warning status
-    statusCritical = Color(0xFFF44336)       // red for critical status
+    statusCritical = Color(0xFFF44336),      // red for critical status
+    inProgress = Color(0xFFF4D700),          // ribbonWarning - amber for modified/temporary items
+    onInProgress = Color(0xFF303030)         // ribbonTextWarning - dark text on amber background
 )
 
 /**
@@ -60,7 +68,9 @@ internal val DarkGeneralColors = GeneralColors(
     invalidatedRecord = Color(0xFFEF5350),   // red for invalid/deleted items (night)
     statusNormal = Color(0xFF81C784),        // lighter green for dark mode
     statusWarning = Color(0xFFFFD54F),       // lighter amber for dark mode
-    statusCritical = Color(0xFFE57373)       // lighter red for dark mode
+    statusCritical = Color(0xFFE57373),      // lighter red for dark mode
+    inProgress = Color(0xFFF4D700),          // ribbonWarning - same in both modes
+    onInProgress = Color(0xFF303030)         // ribbonTextWarning - same in both modes
 )
 
 /**

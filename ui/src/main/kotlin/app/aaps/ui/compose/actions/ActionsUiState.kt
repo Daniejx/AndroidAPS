@@ -18,7 +18,6 @@ enum class StatusLevel {
  */
 data class ActionsUiState(
     // Visibility states
-    val showProfileSwitch: Boolean = false,
     val showTempTarget: Boolean = false,
     val showTempBasal: Boolean = false,
     val showCancelTempBasal: Boolean = false,

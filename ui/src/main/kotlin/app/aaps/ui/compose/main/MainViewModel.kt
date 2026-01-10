@@ -2,25 +2,26 @@ package app.aaps.ui.compose.main
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import app.aaps.core.data.model.EPS
 import app.aaps.core.data.plugin.PluginType
 import app.aaps.core.interfaces.configuration.Config
 import app.aaps.core.interfaces.configuration.ConfigBuilder
+import app.aaps.core.interfaces.db.PersistenceLayer
+import app.aaps.core.interfaces.db.observeChanges
 import app.aaps.core.interfaces.plugin.ActivePlugin
 import app.aaps.core.interfaces.plugin.PluginBase
 import app.aaps.core.interfaces.profile.ProfileFunction
 import app.aaps.core.interfaces.resources.ResourceHelper
-import app.aaps.core.interfaces.rx.AapsSchedulers
-import app.aaps.core.interfaces.rx.bus.RxBus
-import app.aaps.core.interfaces.rx.events.EventRebuildTabs
 import app.aaps.core.interfaces.ui.IconsProvider
 import app.aaps.core.interfaces.utils.fabric.FabricPrivacy
 import app.aaps.core.keys.interfaces.Preferences
+import app.aaps.core.objects.profile.ProfileSealed
 import app.aaps.ui.compose.alertDialogs.AboutDialogData
-import io.reactivex.rxjava3.disposables.CompositeDisposable
-import io.reactivex.rxjava3.kotlin.plusAssign
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -31,14 +32,11 @@ class MainViewModel @Inject constructor(
     private val config: Config,
     private val preferences: Preferences,
     private val profileFunction: ProfileFunction,
+    private val persistenceLayer: PersistenceLayer,
     private val fabricPrivacy: FabricPrivacy,
     private val iconsProvider: IconsProvider,
-    private val rh: ResourceHelper,
-    private val rxBus: RxBus,
-    private val aapsSchedulers: AapsSchedulers
+    private val rh: ResourceHelper
 ) : ViewModel() {
-
-    private val disposable = CompositeDisposable()
 
     private val _uiState = MutableStateFlow(MainUiState())
     val uiState: StateFlow<MainUiState> = _uiState.asStateFlow()
@@ -48,32 +46,33 @@ class MainViewModel @Inject constructor(
 
     init {
         loadDrawerCategories()
-        setupEventListeners()
+        observeProfileChanges()
     }
 
-    override fun onCleared() {
-        super.onCleared()
-        disposable.clear()
-    }
-
-    private fun setupEventListeners() {
-        // Rebuild drawer categories when plugins change
-        disposable += rxBus
-            .toObservable(EventRebuildTabs::class.java)
-            .observeOn(aapsSchedulers.main)
-            .subscribe({
-                           loadDrawerCategories()
-                       }, fabricPrivacy::logException)
+    private fun observeProfileChanges() {
+        // Update profile state when profile changes (using Flow from PersistenceLayer)
+        persistenceLayer.observeChanges<EPS>()
+            .onEach { refreshProfileState() }
+            .launchIn(viewModelScope)
     }
 
     private fun loadDrawerCategories() {
         viewModelScope.launch {
             val categories = buildDrawerCategories()
+            val profile = profileFunction.getProfile()
+            val isModified = profile?.let {
+                if (it is ProfileSealed.EPS) {
+                    it.value.originalPercentage != 100 || it.value.originalTimeshift != 0L || it.value.originalDuration != 0L
+                } else false
+            } ?: false
+
             _uiState.update { state ->
                 state.copy(
                     drawerCategories = categories,
                     isSimpleMode = preferences.simpleMode,
-                    isProfileLoaded = profileFunction.getProfile() != null
+                    isProfileLoaded = profile != null,
+                    profileName = profileFunction.getProfileNameWithRemainingTime(),
+                    isProfileModified = isModified
                 )
             }
         }
@@ -239,7 +238,20 @@ class MainViewModel @Inject constructor(
 
     // Profile state
     fun refreshProfileState() {
-        _uiState.update { it.copy(isProfileLoaded = profileFunction.getProfile() != null) }
+        val profile = profileFunction.getProfile()
+        val isModified = profile?.let {
+            if (it is ProfileSealed.EPS) {
+                it.value.originalPercentage != 100 || it.value.originalTimeshift != 0L || it.value.originalDuration != 0L
+            } else false
+        } ?: false
+
+        _uiState.update {
+            it.copy(
+                isProfileLoaded = profile != null,
+                profileName = profileFunction.getProfileNameWithRemainingTime(),
+                isProfileModified = isModified
+            )
+        }
     }
 
     // Plugin toggle

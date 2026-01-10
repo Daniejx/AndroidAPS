@@ -8,5 +8,8 @@ data class MainUiState(
     val isSimpleMode: Boolean = true,
     val isProfileLoaded: Boolean = false,
     val currentNavDestination: MainNavDestination = MainNavDestination.Overview,
-    val showAboutDialog: Boolean = false
+    val showAboutDialog: Boolean = false,
+    // Profile state for top bar chip
+    val profileName: String = "",
+    val isProfileModified: Boolean = false
 )

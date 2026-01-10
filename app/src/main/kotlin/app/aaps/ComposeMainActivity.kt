@@ -122,6 +122,13 @@ class ComposeMainActivity : DaggerAppCompatActivityWithResult() {
                             } else null,
                             actionsViewModel = actionsViewModel,
                             onMenuClick = { mainViewModel.openDrawer() },
+                            onProfileManagementClick = {
+                                protectionCheck.queryProtection(
+                                    this@ComposeMainActivity,
+                                    ProtectionCheck.Protection.PREFERENCES,
+                                    UIRunnable { navController.navigate(AppRoute.Profile.route) }
+                                )
+                            },
                             onPreferencesClick = {
                                 protectionCheck.queryProtection(this@ComposeMainActivity, ProtectionCheck.Protection.PREFERENCES, {
                                     navController.navigate(AppRoute.Preferences.route)
@@ -156,13 +163,6 @@ class ComposeMainActivity : DaggerAppCompatActivityWithResult() {
                             onSwitchToClassicUi = { switchToClassicUi() },
                             onAboutDialogDismiss = { mainViewModel.setShowAboutDialog(false) },
                             // Actions callbacks
-                            onProfileSwitchClick = {
-                                protectionCheck.queryProtection(
-                                    this@ComposeMainActivity,
-                                    ProtectionCheck.Protection.BOLUS,
-                                    UIRunnable { uiInteraction.runProfileSwitchDialog(supportFragmentManager) }
-                                )
-                            },
                             onTempTargetClick = {
                                 protectionCheck.queryProtection(
                                     this@ComposeMainActivity,

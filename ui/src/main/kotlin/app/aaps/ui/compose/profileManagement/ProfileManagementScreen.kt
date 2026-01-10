@@ -131,7 +131,7 @@ fun ProfileManagementScreen(
         Scaffold(
             topBar = {
                 TopAppBar(
-                    title = { Text(stringResource(R.string.profile_management_title)) },
+                    title = { Text(stringResource(app.aaps.core.ui.R.string.profile_management)) },
                     navigationIcon = {
                         IconButton(onClick = onNavigateBack) {
                             Icon(
@@ -372,14 +372,21 @@ private fun ProfileCarouselCard(
     formatBasalSum: (Double) -> String,
     modifier: Modifier = Modifier
 ) {
+    // Check if active profile has modifications (percentage, timeshift, or duration)
+    val isModified = activeProfileSwitch?.let { ps ->
+        ps.percentage != 100 || ps.timeshift != 0L || ps.duration != 0L
+    } ?: false
+
     val containerColor = when {
         hasErrors -> MaterialTheme.colorScheme.errorContainer
+        isActive && isModified -> AapsTheme.generalColors.inProgress
         isActive -> MaterialTheme.colorScheme.primaryContainer
         else -> MaterialTheme.colorScheme.surfaceVariant
     }
 
     val contentColor = when {
         hasErrors -> MaterialTheme.colorScheme.onErrorContainer
+        isActive && isModified -> AapsTheme.generalColors.onInProgress
         isActive -> MaterialTheme.colorScheme.onPrimaryContainer
         else -> MaterialTheme.colorScheme.onSurfaceVariant
     }
@@ -433,7 +440,7 @@ private fun ProfileCarouselCard(
                 Text(
                     text = stringResource(R.string.active_profile_indicator),
                     style = MaterialTheme.typography.labelMedium,
-                    color = Color(AapsTheme.generalColors.activeInsulinText.value),
+                    color = if (isModified) contentColor else AapsTheme.generalColors.activeInsulinText,
                     fontWeight = FontWeight.Bold
                 )
 
@@ -453,7 +460,7 @@ private fun ProfileCarouselCard(
                         Text(
                             text = details,
                             style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                            color = contentColor
                         )
                     }
                 }
