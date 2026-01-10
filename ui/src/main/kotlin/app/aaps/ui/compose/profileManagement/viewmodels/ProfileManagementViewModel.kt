@@ -92,9 +92,18 @@ class ProfileManagementViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 val profiles = localProfileManager.profiles
-                val currentIndex = localProfileManager.currentProfileIndex
                 val activeProfileSwitch = profileFunction.getRequestedProfile()
                 val activeProfileName = activeProfileSwitch?.profileName
+
+                // On initial load, navigate to active profile
+                val activeIndex = profiles.indexOfFirst { it.name == activeProfileName }
+                val currentIndex = if (activeIndex >= 0 && _uiState.value.isLoading) {
+                    // First load - start at active profile
+                    localProfileManager.currentProfileIndex = activeIndex
+                    activeIndex
+                } else {
+                    localProfileManager.currentProfileIndex
+                }
 
                 // Calculate remaining time for active profile
                 val remainingTime = activeProfileSwitch?.let { ps ->
