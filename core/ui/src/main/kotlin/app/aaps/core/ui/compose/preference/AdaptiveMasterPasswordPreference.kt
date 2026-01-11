@@ -1,16 +1,20 @@
 package app.aaps.core.ui.compose.preference
 
-import android.content.Context
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.res.stringResource
 import app.aaps.core.interfaces.configuration.Config
-import app.aaps.core.interfaces.protection.PasswordCheck
 import app.aaps.core.keys.StringKey
 import app.aaps.core.keys.interfaces.Preferences
 import app.aaps.core.ui.R
+import app.aaps.core.ui.compose.QueryPasswordDialog
+import app.aaps.core.ui.compose.SetPasswordDialog
+import kotlinx.coroutines.launch
 
 /**
  * Master password preference that requires current password verification before allowing change.
@@ -21,16 +25,18 @@ import app.aaps.core.ui.R
  *
  * @param preferences The Preferences instance
  * @param config The Config instance
- * @param passwordCheck The PasswordCheck service for password operations
- * @param context Android context for dialogs
+ * @param checkPassword Function to verify password: (enteredPassword, storedHash) -> Boolean
+ * @param hashPassword Function to hash password before storing: (password) -> String
  */
 @Composable
 fun AdaptiveMasterPasswordPreferenceItem(
     preferences: Preferences,
     config: Config,
-    passwordCheck: PasswordCheck,
-    context: Context
+    checkPassword: (password: String, hash: String) -> Boolean,
+    hashPassword: (String) -> String
 ) {
+    val scope = rememberCoroutineScope()
+    val snackbarHostState = LocalSnackbarHostState.current
     val stringKey = StringKey.ProtectionMasterPassword
 
     val visibility = calculatePreferenceVisibility(
@@ -41,7 +47,6 @@ fun AdaptiveMasterPasswordPreferenceItem(
 
     if (!visibility.visible) return
 
-    // Use var to allow updating state via callbacks, which updates shared state for reactivity
     var passwordState by rememberPreferenceStringState(preferences, stringKey)
     val hasPassword = passwordState.isNotEmpty()
 
@@ -51,15 +56,9 @@ fun AdaptiveMasterPasswordPreferenceItem(
         stringResource(R.string.password_not_set)
     }
 
-    // Callbacks to update shared state when password is set/cleared
-    val onPasswordSet: (String) -> Unit = { newPassword ->
-        // Update shared state with hashed value to trigger reactivity
-        // The actual value doesn't matter for visibility, just needs to be non-empty
-        passwordState = preferences.get(stringKey)
-    }
-    val onPasswordCleared: () -> Unit = {
-        passwordState = ""
-    }
+    // Dialog states
+    var showQueryDialog by remember { mutableStateOf(false) }
+    var showSetDialog by remember { mutableStateOf(false) }
 
     Preference(
         title = { Text(stringResource(app.aaps.core.keys.R.string.master_password)) },
@@ -69,31 +68,71 @@ fun AdaptiveMasterPasswordPreferenceItem(
             {
                 if (hasPassword) {
                     // Password exists - query current password first
-                    passwordCheck.queryPassword(
-                        context = context,
-                        labelId = R.string.current_master_password,
-                        preference = stringKey,
-                        ok = {
-                            passwordCheck.setPassword(
-                                context = context,
-                                labelId = app.aaps.core.keys.R.string.master_password,
-                                preference = stringKey,
-                                ok = onPasswordSet,
-                                clear = onPasswordCleared
-                            )
-                        }
-                    )
+                    showQueryDialog = true
                 } else {
                     // No password - set directly
-                    passwordCheck.setPassword(
-                        context = context,
-                        labelId = app.aaps.core.keys.R.string.master_password,
-                        preference = stringKey,
-                        ok = onPasswordSet,
-                        clear = onPasswordCleared
-                    )
+                    showSetDialog = true
                 }
             }
         } else null
     )
+
+    // Message strings (resolved here for use in callbacks)
+    val wrongPasswordMsg = stringResource(R.string.wrongpassword)
+    val dontMatchMsg = stringResource(R.string.passwords_dont_match)
+    val passwordSetMsg = stringResource(R.string.password_set)
+    val passwordClearedMsg = stringResource(R.string.password_cleared)
+    val notChangedMsg = stringResource(R.string.password_not_changed)
+
+    // Query current password dialog
+    if (showQueryDialog) {
+        QueryPasswordDialog(
+            title = stringResource(R.string.current_master_password),
+            pinInput = false,
+            onConfirm = { enteredPassword ->
+                if (checkPassword(enteredPassword, passwordState)) {
+                    showQueryDialog = false
+                    showSetDialog = true
+                } else {
+                    scope.launch { snackbarHostState?.showSnackbar(wrongPasswordMsg) }
+                }
+            },
+            onCancel = { showQueryDialog = false }
+        )
+    }
+
+    // Set new password dialog
+    if (showSetDialog) {
+        SetPasswordDialog(
+            title = stringResource(app.aaps.core.keys.R.string.master_password),
+            pinInput = false,
+            onConfirm = { password1, password2 ->
+                when {
+                    password1 != password2 -> {
+                        scope.launch { snackbarHostState?.showSnackbar(dontMatchMsg) }
+                    }
+                    password1.isNotEmpty() -> {
+                        preferences.put(stringKey, hashPassword(password1))
+                        passwordState = preferences.get(stringKey)
+                        scope.launch { snackbarHostState?.showSnackbar(passwordSetMsg) }
+                        showSetDialog = false
+                    }
+                    preferences.getIfExists(stringKey) != null -> {
+                        preferences.remove(stringKey)
+                        passwordState = ""
+                        scope.launch { snackbarHostState?.showSnackbar(passwordClearedMsg) }
+                        showSetDialog = false
+                    }
+                    else -> {
+                        scope.launch { snackbarHostState?.showSnackbar(notChangedMsg) }
+                        showSetDialog = false
+                    }
+                }
+            },
+            onCancel = {
+                scope.launch { snackbarHostState?.showSnackbar(notChangedMsg) }
+                showSetDialog = false
+            }
+        )
+    }
 }

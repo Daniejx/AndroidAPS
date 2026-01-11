@@ -4,21 +4,22 @@
 
 package app.aaps.core.ui.compose.preference
 
-import android.content.Context
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.res.stringResource
 import app.aaps.core.interfaces.configuration.Config
-import app.aaps.core.interfaces.protection.PasswordCheck
 import app.aaps.core.keys.interfaces.IntPreferenceKey
 import app.aaps.core.keys.interfaces.PreferenceVisibilityContext
 import app.aaps.core.keys.interfaces.Preferences
 import app.aaps.core.keys.interfaces.StringPreferenceKey
 import app.aaps.core.ui.R
+import app.aaps.core.ui.compose.SetPasswordDialog
+import kotlinx.coroutines.launch
 
 /**
  * Composable password/PIN preference that opens a dialog to set the password.
@@ -27,8 +28,7 @@ import app.aaps.core.ui.R
  * @param preferences The Preferences instance
  * @param config The Config instance
  * @param stringKey The StringPreferenceKey (should have isPassword=true or isPin=true)
- * @param passwordCheck The PasswordCheck service for setting passwords
- * @param context Android context for the dialog
+ * @param hashPassword Function to hash the password before storing
  * @param titleResId Optional title resource ID. If 0, uses stringKey.titleResId
  * @param visibilityKey Optional IntPreferenceKey that controls visibility
  * @param visibilityValue The value that visibilityKey must equal for this preference to be visible
@@ -39,13 +39,14 @@ fun AdaptivePasswordPreferenceItem(
     preferences: Preferences,
     config: Config,
     stringKey: StringPreferenceKey,
-    passwordCheck: PasswordCheck,
-    context: Context,
+    hashPassword: (String) -> String,
     titleResId: Int = 0,
     visibilityKey: IntPreferenceKey? = null,
     visibilityValue: Int? = null,
     visibilityContext: PreferenceVisibilityContext? = null
 ) {
+    val scope = rememberCoroutineScope()
+    val snackbarHostState = LocalSnackbarHostState.current
     val effectiveTitleResId = if (titleResId != 0) titleResId else stringKey.titleResId
 
     // Skip if no title resource is available
@@ -67,9 +68,12 @@ fun AdaptivePasswordPreferenceItem(
 
     if (!visibility.visible) return
 
-    // Use mutable state to track if password is set, updated via callbacks
+    // State for tracking if password is set
     var hasValue by remember { mutableStateOf(preferences.get(stringKey).isNotEmpty()) }
     val isPin = stringKey.isPin
+
+    // State for showing the dialog
+    var showDialog by remember { mutableStateOf(false) }
 
     val summary = when {
         hasValue -> "••••••••"
@@ -82,16 +86,46 @@ fun AdaptivePasswordPreferenceItem(
         summary = { Text(summary) },
         enabled = visibility.enabled,
         onClick = if (visibility.enabled) {
-            {
-                passwordCheck.setPassword(
-                    context = context,
-                    labelId = effectiveTitleResId,
-                    preference = stringKey,
-                    ok = { hasValue = true },
-                    clear = { hasValue = false },
-                    pinInput = isPin
-                )
-            }
+            { showDialog = true }
         } else null
     )
+
+    if (showDialog) {
+        val dontMatchMsg = stringResource(if (isPin) R.string.pin_dont_match else R.string.passwords_dont_match)
+        val setMsg = stringResource(if (isPin) R.string.pin_set else R.string.password_set)
+        val clearedMsg = stringResource(if (isPin) R.string.pin_cleared else R.string.password_cleared)
+        val notChangedMsg = stringResource(if (isPin) R.string.pin_not_changed else R.string.password_not_changed)
+
+        SetPasswordDialog(
+            title = stringResource(effectiveTitleResId),
+            pinInput = isPin,
+            onConfirm = { password1, password2 ->
+                when {
+                    password1 != password2 -> {
+                        scope.launch { snackbarHostState?.showSnackbar(dontMatchMsg) }
+                    }
+                    password1.isNotEmpty() -> {
+                        preferences.put(stringKey, hashPassword(password1))
+                        scope.launch { snackbarHostState?.showSnackbar(setMsg) }
+                        hasValue = true
+                        showDialog = false
+                    }
+                    preferences.getIfExists(stringKey) != null -> {
+                        preferences.remove(stringKey)
+                        scope.launch { snackbarHostState?.showSnackbar(clearedMsg) }
+                        hasValue = false
+                        showDialog = false
+                    }
+                    else -> {
+                        scope.launch { snackbarHostState?.showSnackbar(notChangedMsg) }
+                        showDialog = false
+                    }
+                }
+            },
+            onCancel = {
+                scope.launch { snackbarHostState?.showSnackbar(notChangedMsg) }
+                showDialog = false
+            }
+        )
+    }
 }

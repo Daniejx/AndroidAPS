@@ -23,6 +23,8 @@ import app.aaps.core.interfaces.plugin.PluginBase
 import app.aaps.core.interfaces.profile.ProfileUtil
 import app.aaps.core.interfaces.protection.PasswordCheck
 import app.aaps.core.interfaces.protection.ProtectionCheck
+import app.aaps.core.interfaces.protection.ProtectionResult
+import app.aaps.core.objects.crypto.CryptoUtil
 import app.aaps.core.interfaces.rx.AapsSchedulers
 import app.aaps.core.interfaces.rx.events.EventPreferenceChange
 import app.aaps.core.interfaces.ui.UiInteraction
@@ -30,11 +32,12 @@ import app.aaps.core.interfaces.utils.fabric.FabricPrivacy
 import app.aaps.core.keys.BooleanKey
 import app.aaps.core.keys.StringKey
 import app.aaps.core.keys.interfaces.PreferenceVisibilityContext
-import app.aaps.core.ui.UIRunnable
 import app.aaps.core.ui.compose.AapsTheme
 import app.aaps.core.ui.compose.LocalPreferences
 import app.aaps.core.ui.compose.LocalRxBus
+import app.aaps.core.ui.compose.ProtectionHost
 import app.aaps.core.ui.compose.preference.PluginPreferencesScreen
+import app.aaps.implementation.protection.BiometricCheck
 import app.aaps.plugins.configuration.activities.DaggerAppCompatActivityWithResult
 import app.aaps.plugins.configuration.activities.SingleFragmentActivity
 import app.aaps.plugins.configuration.setupwizard.SetupWizardActivity
@@ -67,6 +70,7 @@ class ComposeMainActivity : DaggerAppCompatActivityWithResult() {
     @Inject lateinit var fabricPrivacy: FabricPrivacy
     @Inject lateinit var protectionCheck: ProtectionCheck
     @Inject lateinit var passwordCheck: PasswordCheck
+    @Inject lateinit var cryptoUtil: CryptoUtil
     @Inject lateinit var activePlugin: ActivePlugin
     @Inject lateinit var configBuilder: ConfigBuilder
     @Inject lateinit var config: Config
@@ -106,6 +110,16 @@ class ComposeMainActivity : DaggerAppCompatActivityWithResult() {
             LocalRxBus provides rxBus
         ) {
             AapsTheme {
+                // Protection dialog host - handles all protection requests
+                ProtectionHost(
+                    protectionCheck = protectionCheck,
+                    preferences = preferences,
+                    checkPassword = cryptoUtil::checkPassword,
+                    showBiometric = { activity, titleRes, onGranted, onCancelled, onDenied ->
+                        BiometricCheck.biometricPrompt(activity, titleRes, onGranted, onCancelled, onDenied, passwordCheck)
+                    }
+                )
+
                 val state by mainViewModel.uiState.collectAsState()
 
                 NavHost(
@@ -123,16 +137,18 @@ class ComposeMainActivity : DaggerAppCompatActivityWithResult() {
                             actionsViewModel = actionsViewModel,
                             onMenuClick = { mainViewModel.openDrawer() },
                             onProfileManagementClick = {
-                                protectionCheck.queryProtection(
-                                    this@ComposeMainActivity,
-                                    ProtectionCheck.Protection.PREFERENCES,
-                                    UIRunnable { navController.navigate(AppRoute.Profile.route) }
-                                )
+                                protectionCheck.requestProtection(ProtectionCheck.Protection.PREFERENCES) { result ->
+                                    if (result == ProtectionResult.GRANTED) {
+                                        navController.navigate(AppRoute.Profile.route)
+                                    }
+                                }
                             },
                             onPreferencesClick = {
-                                protectionCheck.queryProtection(this@ComposeMainActivity, ProtectionCheck.Protection.PREFERENCES, {
-                                    navController.navigate(AppRoute.Preferences.route)
-                                })
+                                protectionCheck.requestProtection(ProtectionCheck.Protection.PREFERENCES) { result ->
+                                    if (result == ProtectionResult.GRANTED) {
+                                        navController.navigate(AppRoute.Preferences.route)
+                                    }
+                                }
                             },
                             onMenuItemClick = { menuItem ->
                                 handleMenuItemClick(menuItem, navController)
@@ -149,9 +165,11 @@ class ComposeMainActivity : DaggerAppCompatActivityWithResult() {
                                 mainViewModel.togglePluginEnabled(plugin, type, enabled)
                             },
                             onPluginPreferencesClick = { plugin ->
-                                protectionCheck.queryProtection(this@ComposeMainActivity, ProtectionCheck.Protection.PREFERENCES, {
-                                    navController.navigate(AppRoute.PluginPreferences.createRoute(plugin.javaClass.simpleName))
-                                })
+                                protectionCheck.requestProtection(ProtectionCheck.Protection.PREFERENCES) { result ->
+                                    if (result == ProtectionResult.GRANTED) {
+                                        navController.navigate(AppRoute.PluginPreferences.createRoute(plugin.javaClass.simpleName))
+                                    }
+                                }
                             },
                             onDrawerClosed = { mainViewModel.closeDrawer() },
                             onNavDestinationSelected = { destination ->
@@ -164,35 +182,37 @@ class ComposeMainActivity : DaggerAppCompatActivityWithResult() {
                             onAboutDialogDismiss = { mainViewModel.setShowAboutDialog(false) },
                             // Actions callbacks
                             onTempTargetClick = {
-                                protectionCheck.queryProtection(
-                                    this@ComposeMainActivity,
-                                    ProtectionCheck.Protection.BOLUS,
-                                    UIRunnable { uiInteraction.runTempTargetDialog(supportFragmentManager) }
-                                )
+                                protectionCheck.requestProtection(ProtectionCheck.Protection.BOLUS) { result ->
+                                    if (result == ProtectionResult.GRANTED) {
+                                        uiInteraction.runTempTargetDialog(supportFragmentManager)
+                                    }
+                                }
                             },
                             onTempBasalClick = {
-                                protectionCheck.queryProtection(
-                                    this@ComposeMainActivity,
-                                    ProtectionCheck.Protection.BOLUS,
-                                    UIRunnable { uiInteraction.runTempBasalDialog(supportFragmentManager) }
-                                )
+                                protectionCheck.requestProtection(ProtectionCheck.Protection.BOLUS) { result ->
+                                    if (result == ProtectionResult.GRANTED) {
+                                        uiInteraction.runTempBasalDialog(supportFragmentManager)
+                                    }
+                                }
                             },
                             onExtendedBolusClick = {
-                                protectionCheck.queryProtection(this@ComposeMainActivity, ProtectionCheck.Protection.BOLUS, UIRunnable {
-                                    uiInteraction.showOkCancelDialog(
-                                        context = this@ComposeMainActivity,
-                                        title = app.aaps.core.ui.R.string.extended_bolus,
-                                        message = app.aaps.plugins.main.R.string.ebstopsloop,
-                                        ok = { uiInteraction.runExtendedBolusDialog(supportFragmentManager) }
-                                    )
-                                })
+                                protectionCheck.requestProtection(ProtectionCheck.Protection.BOLUS) { result ->
+                                    if (result == ProtectionResult.GRANTED) {
+                                        uiInteraction.showOkCancelDialog(
+                                            context = this@ComposeMainActivity,
+                                            title = app.aaps.core.ui.R.string.extended_bolus,
+                                            message = app.aaps.plugins.main.R.string.ebstopsloop,
+                                            ok = { uiInteraction.runExtendedBolusDialog(supportFragmentManager) }
+                                        )
+                                    }
+                                }
                             },
                             onFillClick = {
-                                protectionCheck.queryProtection(
-                                    this@ComposeMainActivity,
-                                    ProtectionCheck.Protection.BOLUS,
-                                    UIRunnable { uiInteraction.runFillDialog(supportFragmentManager) }
-                                )
+                                protectionCheck.requestProtection(ProtectionCheck.Protection.BOLUS) { result ->
+                                    if (result == ProtectionResult.GRANTED) {
+                                        uiInteraction.runFillDialog(supportFragmentManager)
+                                    }
+                                }
                             },
                             onHistoryBrowserClick = {
                                 startActivity(Intent(this@ComposeMainActivity, uiInteraction.historyBrowseActivity))
@@ -239,11 +259,11 @@ class ComposeMainActivity : DaggerAppCompatActivityWithResult() {
                                 navController.navigate(AppRoute.ProfileEditor.createRoute(index))
                             },
                             onActivateProfile = { index ->
-                                protectionCheck.queryProtection(
-                                    this@ComposeMainActivity,
-                                    ProtectionCheck.Protection.BOLUS,
-                                    UIRunnable { navController.navigate(AppRoute.ProfileActivation.createRoute(index)) }
-                                )
+                                protectionCheck.requestProtection(ProtectionCheck.Protection.BOLUS) { result ->
+                                    if (result == ProtectionResult.GRANTED) {
+                                        navController.navigate(AppRoute.ProfileActivation.createRoute(index))
+                                    }
+                                }
                             }
                         )
                     }
@@ -331,7 +351,8 @@ class ComposeMainActivity : DaggerAppCompatActivityWithResult() {
                             preferences = preferences,
                             config = config,
                             rh = rh,
-                            passwordCheck = passwordCheck,
+                            checkPassword = cryptoUtil::checkPassword,
+                            hashPassword = cryptoUtil::hashPassword,
                             visibilityContext = visibilityContext,
                             profileUtil = profileUtil,
                             skinEntries = skinProvider.list.associate { skin -> skin.javaClass.name to rh.gs(skin.description) },
@@ -402,50 +423,32 @@ class ComposeMainActivity : DaggerAppCompatActivityWithResult() {
 
     private fun handleMenuItemClick(menuItem: MainMenuItem, navController: NavController) {
         when (menuItem) {
-            is MainMenuItem.Preferences -> {
-                protectionCheck.queryProtection(this, ProtectionCheck.Protection.PREFERENCES, {
-                    navController.navigate(AppRoute.Preferences.route)
-                })
-            }
-
+            is MainMenuItem.Preferences,
             is MainMenuItem.PluginPreferences -> {
-                // Navigate to plugin preferences if a plugin is specified
-                protectionCheck.queryProtection(this, ProtectionCheck.Protection.PREFERENCES, {
-                    navController.navigate(AppRoute.Preferences.route)
-                })
+                protectionCheck.requestProtection(ProtectionCheck.Protection.PREFERENCES) { result ->
+                    if (result == ProtectionResult.GRANTED) {
+                        navController.navigate(AppRoute.Preferences.route)
+                    }
+                }
             }
 
-            is MainMenuItem.Treatments -> {
-                navController.navigate(AppRoute.Treatments.route)
-            }
+            is MainMenuItem.Treatments -> navController.navigate(AppRoute.Treatments.route)
 
             is MainMenuItem.HistoryBrowser -> {
-                startActivity(
-                    Intent(this, HistoryBrowseActivity::class.java)
-                        .setAction("app.aaps.ComposeMainActivity")
-                )
+                startActivity(Intent(this, HistoryBrowseActivity::class.java).setAction("app.aaps.ComposeMainActivity"))
             }
 
             is MainMenuItem.SetupWizard -> {
-                protectionCheck.queryProtection(this, ProtectionCheck.Protection.PREFERENCES, {
-                    startActivity(
-                        Intent(this, SetupWizardActivity::class.java)
-                            .setAction("app.aaps.ComposeMainActivity")
-                    )
-                })
+                protectionCheck.requestProtection(ProtectionCheck.Protection.PREFERENCES) { result ->
+                    if (result == ProtectionResult.GRANTED) {
+                        startActivity(Intent(this, SetupWizardActivity::class.java).setAction("app.aaps.ComposeMainActivity"))
+                    }
+                }
             }
 
-            is MainMenuItem.Stats -> {
-                navController.navigate(AppRoute.Stats.route)
-            }
-
-            is MainMenuItem.ProfileHelper -> {
-                navController.navigate(AppRoute.ProfileHelper.route)
-            }
-
-            is MainMenuItem.About -> {
-                mainViewModel.setShowAboutDialog(true)
-            }
+            is MainMenuItem.Stats -> navController.navigate(AppRoute.Stats.route)
+            is MainMenuItem.ProfileHelper -> navController.navigate(AppRoute.ProfileHelper.route)
+            is MainMenuItem.About -> mainViewModel.setShowAboutDialog(true)
 
             is MainMenuItem.Exit -> {
                 finish()

@@ -11,10 +11,13 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import app.aaps.core.data.plugin.PluginType
@@ -25,7 +28,6 @@ import app.aaps.core.interfaces.maintenance.Maintenance
 import app.aaps.core.interfaces.plugin.ActivePlugin
 import app.aaps.core.interfaces.plugin.PluginBase
 import app.aaps.core.interfaces.profile.ProfileUtil
-import app.aaps.core.interfaces.protection.PasswordCheck
 import app.aaps.core.interfaces.resources.ResourceHelper
 import app.aaps.core.interfaces.smsCommunicator.SmsCommunicator
 import app.aaps.core.keys.BooleanKey
@@ -34,7 +36,9 @@ import app.aaps.core.keys.StringKey
 import app.aaps.core.keys.interfaces.PreferenceVisibilityContext
 import app.aaps.core.keys.interfaces.Preferences
 import app.aaps.core.keys.interfaces.withEntries
-import app.aaps.core.ui.compose.preference.LocalPasswordCheck
+import app.aaps.core.ui.compose.preference.LocalCheckPassword
+import app.aaps.core.ui.compose.preference.LocalHashPassword
+import app.aaps.core.ui.compose.preference.LocalSnackbarHostState
 import app.aaps.core.ui.compose.preference.LocalVisibilityContext
 import app.aaps.core.ui.compose.preference.PreferenceSubScreenDef
 import app.aaps.core.ui.compose.preference.ProvidePreferenceTheme
@@ -53,7 +57,8 @@ import app.aaps.core.ui.compose.preference.verticalScrollIndicators
  * @param preferences Preferences instance for built-in settings
  * @param config Config instance
  * @param rh ResourceHelper instance
- * @param passwordCheck PasswordCheck for protection settings
+ * @param checkPassword Function to verify passwords: (enteredPassword, storedHash) -> Boolean
+ * @param hashPassword Function to hash passwords before storing: (password) -> String
  * @param visibilityContext PreferenceVisibilityContext for visibility control
  * @param profileUtil ProfileUtil instance
  * @param skinEntries Map of skin class names to their display names for the skin preference
@@ -66,7 +71,8 @@ fun AllPreferencesScreen(
     preferences: Preferences,
     config: Config,
     rh: ResourceHelper,
-    passwordCheck: PasswordCheck,
+    checkPassword: (password: String, hash: String) -> Boolean,
+    hashPassword: (password: String) -> String,
     visibilityContext: PreferenceVisibilityContext,
     profileUtil: ProfileUtil,
     skinEntries: Map<String, String>,
@@ -199,8 +205,12 @@ fun AllPreferencesScreen(
         getPreferenceContentIfEnabled(autotunePlugin)?.let { add(it) }
     }
 
+    val snackbarHostState = remember { SnackbarHostState() }
+
     CompositionLocalProvider(
-        LocalPasswordCheck provides passwordCheck,
+        LocalCheckPassword provides checkPassword,
+        LocalHashPassword provides hashPassword,
+        LocalSnackbarHostState provides snackbarHostState,
         LocalVisibilityContext provides visibilityContext
     ) {
         ProvidePreferenceTheme {
@@ -222,7 +232,8 @@ fun AllPreferencesScreen(
                             }
                         }
                     )
-                }
+                },
+                snackbarHost = { SnackbarHost(snackbarHostState) }
             ) { paddingValues ->
                 val listState = rememberLazyListState()
                 val sectionState = rememberPreferenceSectionState()

@@ -4,12 +4,17 @@ import androidx.annotation.UiThread
 import androidx.fragment.app.FragmentActivity
 import app.aaps.core.interfaces.protection.PasswordCheck
 import app.aaps.core.interfaces.protection.ProtectionCheck
+import app.aaps.core.interfaces.protection.ProtectionRequest
+import app.aaps.core.interfaces.protection.ProtectionResult
+import app.aaps.core.interfaces.protection.ProtectionType
 import app.aaps.core.interfaces.utils.DateUtil
 import app.aaps.core.keys.IntKey
-import app.aaps.core.keys.ProtectionType
 import app.aaps.core.keys.StringKey
 import app.aaps.core.keys.interfaces.Preferences
 import dagger.Reusable
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
@@ -21,6 +26,9 @@ class ProtectionCheckImpl @Inject constructor(
 ) : ProtectionCheck {
 
     private var lastAuthorization = mutableListOf(0L, 0L, 0L)
+    private var requestIdCounter = 0L
+    private val _pendingRequest = MutableStateFlow<ProtectionRequest?>(null)
+    override val pendingRequest: StateFlow<ProtectionRequest?> = _pendingRequest.asStateFlow()
 
     private val passwordsResourceIDs = listOf(
         StringKey.ProtectionSettingsPassword,
@@ -134,6 +142,56 @@ class ProtectionCheckImpl @Inject constructor(
                     { fail?.run() },
                     true
                 )
+        }
+    }
+
+    override fun requestProtection(protection: ProtectionCheck.Protection, onResult: (ProtectionResult) -> Unit) {
+        // No master password = no protection at all
+        if (preferences.get(StringKey.ProtectionMasterPassword).isEmpty()) {
+            onOk(protection)
+            onResult(ProtectionResult.GRANTED)
+            return
+        }
+
+        // Check active session
+        if (activeSession(protection)) {
+            onOk(protection)
+            onResult(ProtectionResult.GRANTED)
+            return
+        }
+
+        val type = ProtectionType.entries[preferences.get(protectionTypeResourceIDs[protection.ordinal])]
+
+        // No protection configured
+        if (type == ProtectionType.NONE) {
+            onOk(protection)
+            onResult(ProtectionResult.GRANTED)
+            return
+        }
+
+        val titleRes = when (type) {
+            ProtectionType.CUSTOM_PIN -> titlePinResourceIDs[protection.ordinal]
+            else                      -> titlePassResourceIDs[protection.ordinal]
+        }
+
+        _pendingRequest.value = ProtectionRequest(
+            id = ++requestIdCounter,
+            protection = protection,
+            type = type,
+            titleRes = titleRes,
+            onResult = { result ->
+                if (result == ProtectionResult.GRANTED) onOk(protection)
+                _pendingRequest.value = null
+                onResult(result)
+            }
+        )
+    }
+
+    override fun completeRequest(requestId: Long, result: ProtectionResult) {
+        _pendingRequest.value?.let { request ->
+            if (request.id == requestId) {
+                request.onResult(result)
+            }
         }
     }
 }

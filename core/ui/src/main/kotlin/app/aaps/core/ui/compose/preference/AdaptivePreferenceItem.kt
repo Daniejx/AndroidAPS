@@ -144,24 +144,23 @@ fun AdaptivePreferenceItem(
         is StringPreferenceKey          -> {
             // Handle password/PIN fields specially
             if (key.isPassword || key.isPin) {
-                val passwordCheck = LocalPasswordCheck.current
-                val context = LocalContext.current
-                if (passwordCheck != null) {
+                val checkPassword = LocalCheckPassword.current
+                val hashPassword = LocalHashPassword.current
+                if (checkPassword != null && hashPassword != null) {
                     // Special handling for master password (requires current password first)
                     if (key == StringKey.ProtectionMasterPassword) {
                         AdaptiveMasterPasswordPreferenceItem(
                             preferences = preferences,
                             config = config,
-                            passwordCheck = passwordCheck,
-                            context = context
+                            checkPassword = checkPassword,
+                            hashPassword = hashPassword
                         )
                     } else {
                         AdaptivePasswordPreferenceItem(
                             preferences = preferences,
                             config = config,
                             stringKey = key,
-                            passwordCheck = passwordCheck,
-                            context = context,
+                            hashPassword = hashPassword,
                             visibilityContext = visibilityContext
                         )
                     }
