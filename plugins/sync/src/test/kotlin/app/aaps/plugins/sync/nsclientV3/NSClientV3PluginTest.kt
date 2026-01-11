@@ -29,6 +29,7 @@ import app.aaps.core.interfaces.nsclient.NSAlarm
 import app.aaps.core.interfaces.nsclient.NSClientMvvmRepository
 import app.aaps.core.interfaces.profile.ProfileFunction
 import app.aaps.core.interfaces.pump.VirtualPump
+import app.aaps.core.interfaces.sharedPreferences.SP
 import app.aaps.core.interfaces.source.NSClientSource
 import app.aaps.core.interfaces.sync.DataSyncSelector
 import app.aaps.core.interfaces.sync.NsClient
@@ -59,6 +60,7 @@ import org.mockito.kotlin.whenever
 @Suppress("SpellCheckingInspection")
 internal class NSClientV3PluginTest : TestBaseWithProfile() {
 
+    @Mock lateinit var sp: SP
     @Mock lateinit var receiverDelegate: ReceiverDelegate
     @Mock lateinit var dataSyncSelectorV3: DataSyncSelectorV3
     @Mock lateinit var nsAndroidClient: NSAndroidClient
@@ -85,7 +87,7 @@ internal class NSClientV3PluginTest : TestBaseWithProfile() {
         storeDataForDb = StoreDataForDbImpl(aapsLogger, persistenceLayer, preferences, config, nsClientSource, virtualPump, nsClientMvvmRepository)
         sut =
             NSClientV3Plugin(
-                aapsLogger, rh, preferences, aapsSchedulers, rxBus, context, fabricPrivacy,
+                aapsLogger, rh, preferences, sp, aapsSchedulers, rxBus, context, fabricPrivacy,
                 receiverDelegate, config, dateUtil, dataSyncSelectorV3, persistenceLayer,
                 nsClientSource, storeDataForDb, decimalFormatter, l, nsClientMvvmRepository, uiInteraction, uel, activePlugin
             )

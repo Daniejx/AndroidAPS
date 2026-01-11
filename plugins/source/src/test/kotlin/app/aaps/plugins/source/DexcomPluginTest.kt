@@ -1,7 +1,6 @@
 package app.aaps.plugins.source
 
 import app.aaps.core.interfaces.db.PersistenceLayer
-import app.aaps.core.interfaces.ui.UiInteraction
 import app.aaps.shared.tests.TestBaseWithProfile
 import com.google.common.truth.Truth.assertThat
 import org.junit.jupiter.api.BeforeEach
@@ -11,13 +10,12 @@ import org.mockito.Mock
 class DexcomPluginTest : TestBaseWithProfile() {
 
     @Mock lateinit var persistenceLayer: PersistenceLayer
-    @Mock lateinit var uiInteraction: UiInteraction
 
     private lateinit var dexcomPlugin: DexcomPlugin
 
     @BeforeEach
     fun setup() {
-        dexcomPlugin = DexcomPlugin(rh, aapsLogger, context, config, persistenceLayer, dateUtil, profileUtil, uiInteraction)
+        dexcomPlugin = DexcomPlugin(rh, aapsLogger, context, config, preferences, persistenceLayer, dateUtil, profileUtil)
     }
 
     @Test

@@ -7,7 +7,6 @@ import app.aaps.core.interfaces.configuration.Config
 import app.aaps.core.interfaces.db.PersistenceLayer
 import app.aaps.core.interfaces.profile.ProfileUtil
 import app.aaps.core.interfaces.resources.ResourceHelper
-import app.aaps.core.interfaces.ui.UiInteraction
 import app.aaps.core.interfaces.utils.DateUtil
 import app.aaps.shared.tests.TestBase
 import com.google.common.truth.Truth.assertThat
@@ -24,11 +23,10 @@ class NSClientSourcePluginTest : TestBase() {
     @Mock lateinit var persistenceLayer: PersistenceLayer
     @Mock lateinit var dateUtil: DateUtil
     @Mock lateinit var profileUtil: ProfileUtil
-    @Mock lateinit var uiInteraction: UiInteraction
 
     @BeforeEach
     fun setup() {
-        nsClientSourcePlugin = NSClientSourcePlugin(rh, aapsLogger, config, persistenceLayer, dateUtil, profileUtil, uiInteraction)
+        nsClientSourcePlugin = NSClientSourcePlugin(rh, aapsLogger, config, persistenceLayer, dateUtil, profileUtil)
     }
 
     @Test

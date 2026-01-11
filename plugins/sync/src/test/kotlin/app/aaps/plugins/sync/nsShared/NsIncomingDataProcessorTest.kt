@@ -4,7 +4,6 @@ import app.aaps.core.data.model.TrendArrow
 import app.aaps.core.data.time.T
 import app.aaps.core.interfaces.nsclient.NSClientMvvmRepository
 import app.aaps.core.interfaces.nsclient.StoreDataForDb
-import app.aaps.core.interfaces.profile.ProfileSource
 import app.aaps.core.interfaces.source.NSClientSource
 import app.aaps.core.interfaces.ui.UiInteraction
 import app.aaps.core.keys.BooleanKey
@@ -46,7 +45,6 @@ class NsIncomingDataProcessorTest : TestBaseWithProfile() {
     // Mock all dependencies
     @Mock lateinit var nsClientSource: NSClientSource
     @Mock lateinit var storeDataForDb: StoreDataForDb
-    @Mock lateinit var profileSource: ProfileSource
     @Mock lateinit var uiInteraction: UiInteraction
     @Mock lateinit var nsClientMvvmRepository: NSClientMvvmRepository
 
@@ -67,10 +65,10 @@ class NsIncomingDataProcessorTest : TestBaseWithProfile() {
             rxBus = rxBus,
             dateUtil = dateUtil,
             activePlugin = activePlugin,
+            localProfileManager = localProfileManager,
             storeDataForDb = storeDataForDb,
             config = config,
             profileStoreProvider = profileStoreProvider,
-            profileSource = profileSource,
             uiInteraction = uiInteraction,
             nsClientMvvmRepository = nsClientMvvmRepository
         )
@@ -247,7 +245,7 @@ class NsIncomingDataProcessorTest : TestBaseWithProfile() {
         whenever(preferences.get(LongNonKey.LocalProfileLastChange)).thenReturn(localProfileTime)
 
         processor.processProfile(profileJson, doFullSync = false)
-        verify(profileSource).loadFromStore(any())
+        verify(localProfileManager).loadFromStore(any())
     }
 
     @Test
@@ -259,7 +257,7 @@ class NsIncomingDataProcessorTest : TestBaseWithProfile() {
         whenever(preferences.get(LongNonKey.LocalProfileLastChange)).thenReturn(localProfileTime)
 
         processor.processProfile(profileJson, doFullSync = false)
-        verify(profileSource, never()).loadFromStore(any())
+        verify(localProfileManager, never()).loadFromStore(any())
     }
 
     @Test

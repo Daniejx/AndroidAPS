@@ -10,7 +10,6 @@ import app.aaps.core.data.model.TrendArrow
 import app.aaps.core.data.plugin.PluginType
 import app.aaps.core.data.ue.Sources
 import app.aaps.core.interfaces.db.PersistenceLayer
-import app.aaps.core.interfaces.ui.UiInteraction
 import app.aaps.plugins.source.keys.IntelligoLongKey
 import app.aaps.shared.tests.TestBaseWithProfile
 import kotlinx.coroutines.test.runTest
@@ -29,7 +28,6 @@ class IntelligoPluginTest : TestBaseWithProfile() {
     @Mock lateinit var persistenceLayer: PersistenceLayer
     @Mock lateinit var contentResolver: ContentResolver
     @Mock lateinit var cursor: Cursor
-    @Mock lateinit var uiInteraction: UiInteraction
 
     private lateinit var intelligoPlugin: IntelligoPlugin
 
@@ -41,7 +39,7 @@ class IntelligoPluginTest : TestBaseWithProfile() {
             whenever(persistenceLayer.insertCgmSourceData(anyOrNull(), anyOrNull(), anyOrNull(), anyOrNull())).thenReturn(PersistenceLayer.TransactionResult())
         }
 
-        intelligoPlugin = IntelligoPlugin(rh, aapsLogger, preferences, context, persistenceLayer, dateUtil, fabricPrivacy, profileUtil, uiInteraction)
+        intelligoPlugin = IntelligoPlugin(rh, aapsLogger, preferences, config, context, persistenceLayer, dateUtil, fabricPrivacy, profileUtil)
 
         // Default cursor to be empty
         whenever(cursor.isAfterLast).thenReturn(true)

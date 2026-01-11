@@ -3,7 +3,6 @@ package app.aaps.plugins.automation.actions
 import app.aaps.core.data.model.GlucoseUnit
 import app.aaps.core.interfaces.aps.Loop
 import app.aaps.core.interfaces.db.PersistenceLayer
-import app.aaps.core.interfaces.profile.ProfileSource
 import app.aaps.core.interfaces.smsCommunicator.SmsCommunicator
 import app.aaps.plugins.automation.triggers.Trigger
 import app.aaps.shared.tests.TestBaseWithProfile
@@ -18,7 +17,6 @@ import org.mockito.kotlin.whenever
 open class
 ActionsTestBase : TestBaseWithProfile() {
 
-    @Mock lateinit var profilePlugin: ProfileSource
     @Mock lateinit var smsCommunicator: SmsCommunicator
     @Mock lateinit var loop: Loop
     @Mock lateinit var persistenceLayer: PersistenceLayer
@@ -52,6 +50,7 @@ ActionsTestBase : TestBaseWithProfile() {
                 it.activePlugin = activePlugin
                 it.profileFunction = profileFunction
                 it.dateUtil = dateUtil
+                it.localProfileManager = localProfileManager
             }
             if (it is ActionProfileSwitchPercent) {
                 it.profileFunction = profileFunction
@@ -83,8 +82,7 @@ ActionsTestBase : TestBaseWithProfile() {
     fun mock() {
         whenever(profileFunction.getUnits()).thenReturn(GlucoseUnit.MGDL)
         whenever(profileFunction.getProfile()).thenReturn(validProfile)
-        whenever(activePlugin.activeProfileSource).thenReturn(profilePlugin)
-        whenever(profilePlugin.profile).thenReturn(getValidProfileStore())
+        whenever(localProfileManager.profile).thenReturn(getValidProfileStore())
         whenever(loop.handleRunningModeChange(anyOrNull(), anyOrNull(), anyOrNull(), anyOrNull(), anyInt(), anyOrNull())).thenReturn(true)
 
         whenever(rh.gs(app.aaps.core.ui.R.string.ok)).thenReturn("OK")

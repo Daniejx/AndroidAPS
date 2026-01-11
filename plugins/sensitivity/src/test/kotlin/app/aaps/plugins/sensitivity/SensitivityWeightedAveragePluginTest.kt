@@ -23,7 +23,7 @@ class SensitivityWeightedAveragePluginTest : TestBaseWithProfile() {
             aapsLogger, rh, preferences, profileFunction, dateUtil, persistenceLayer, activePlugin
         )
         sensitivityAAPSPlugin = SensitivityAAPSPlugin(
-            aapsLogger, rh, preferences, profileFunction, dateUtil, persistenceLayer
+            aapsLogger, rh, preferences, profileFunction, dateUtil, persistenceLayer, config
         )
         whenever(activePlugin.getPluginsList()).thenReturn(arrayListOf(sensitivityAAPSPlugin))
     }

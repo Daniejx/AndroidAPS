@@ -1,9 +1,9 @@
 package app.aaps.plugins.source
 
+import app.aaps.core.interfaces.configuration.Config
 import app.aaps.core.interfaces.db.PersistenceLayer
 import app.aaps.core.interfaces.profile.ProfileUtil
 import app.aaps.core.interfaces.resources.ResourceHelper
-import app.aaps.core.interfaces.ui.UiInteraction
 import app.aaps.core.interfaces.utils.DateUtil
 import app.aaps.core.keys.interfaces.Preferences
 import app.aaps.shared.tests.TestBase
@@ -18,14 +18,14 @@ class MM640GPluginTest : TestBase() {
 
     @Mock lateinit var rh: ResourceHelper
     @Mock lateinit var preferences: Preferences
+    @Mock lateinit var config: Config
     @Mock lateinit var persistenceLayer: PersistenceLayer
     @Mock lateinit var dateUtil: DateUtil
     @Mock lateinit var profileUtil: ProfileUtil
-    @Mock lateinit var uiInteraction: UiInteraction
 
     @BeforeEach
     fun setup() {
-        mM640gPlugin = MM640gPlugin(rh, aapsLogger, preferences, persistenceLayer, dateUtil, profileUtil, uiInteraction)
+        mM640gPlugin = MM640gPlugin(rh, aapsLogger, preferences, config, persistenceLayer, dateUtil, profileUtil)
     }
 
     @Test fun advancedFilteringSupported() {

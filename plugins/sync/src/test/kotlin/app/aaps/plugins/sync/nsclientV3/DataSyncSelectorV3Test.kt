@@ -45,7 +45,7 @@ class DataSyncSelectorV3Test : TestBaseWithProfile() {
     @BeforeEach
     fun setUp() {
         storeDataForDb = StoreDataForDbImpl(aapsLogger, persistenceLayer, preferences, config, nsClientSource, virtualPump, nsClientMvvmRepository)
-        sut = DataSyncSelectorV3(preferences, aapsLogger, dateUtil, profileFunction, activePlugin, persistenceLayer, storeDataForDb, config, nsClientMvvmRepository, dagger.Lazy { nsClientV3Plugin })
+        sut = DataSyncSelectorV3(preferences, aapsLogger, dateUtil, profileFunction, activePlugin, localProfileManager, persistenceLayer, storeDataForDb, config, nsClientMvvmRepository, dagger.Lazy { nsClientV3Plugin })
     }
 
     @Test

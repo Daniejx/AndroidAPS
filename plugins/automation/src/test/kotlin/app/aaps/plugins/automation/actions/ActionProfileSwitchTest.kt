@@ -44,7 +44,7 @@ class ActionProfileSwitchTest : ActionsTestBase() {
     @Test fun doAction() {
         //Empty input
         whenever(profileFunction.getProfileName()).thenReturn("Test")
-        sut.inputProfileName = InputProfileName(rh, activePlugin, "")
+        sut.inputProfileName = InputProfileName(rh, localProfileManager, "")
         sut.doAction(object : Callback() {
             override fun run() {
                 assertThat(result.success).isFalse()
@@ -53,7 +53,7 @@ class ActionProfileSwitchTest : ActionsTestBase() {
 
         //Not initialized profileStore
         whenever(profileFunction.getProfile()).thenReturn(null)
-        sut.inputProfileName = InputProfileName(rh, activePlugin, "someProfile")
+        sut.inputProfileName = InputProfileName(rh, localProfileManager, "someProfile")
         sut.doAction(object : Callback() {
             override fun run() {
                 assertThat(result.success).isFalse()
@@ -63,7 +63,7 @@ class ActionProfileSwitchTest : ActionsTestBase() {
         //profile already set
         whenever(profileFunction.getProfile()).thenReturn(validProfile)
         whenever(profileFunction.getProfileName()).thenReturn("Test")
-        sut.inputProfileName = InputProfileName(rh, activePlugin, "Test")
+        sut.inputProfileName = InputProfileName(rh, localProfileManager, "Test")
         sut.doAction(object : Callback() {
             override fun run() {
                 assertThat(result.success).isTrue()
@@ -73,7 +73,7 @@ class ActionProfileSwitchTest : ActionsTestBase() {
 
         // profile doesn't exists
         whenever(profileFunction.getProfileName()).thenReturn("Active")
-        sut.inputProfileName = InputProfileName(rh, activePlugin, "Test")
+        sut.inputProfileName = InputProfileName(rh, localProfileManager, "Test")
         sut.doAction(object : Callback() {
             override fun run() {
                 assertThat(result.success).isFalse()
@@ -84,7 +84,7 @@ class ActionProfileSwitchTest : ActionsTestBase() {
         // do profile switch
         whenever(profileFunction.getProfileName()).thenReturn("Test")
         whenever(profileFunction.createProfileSwitch(anyOrNull(), anyString(), anyInt(), anyInt(), anyInt(), anyLong(), any(), any(), any(), any())).thenReturn(true)
-        sut.inputProfileName = InputProfileName(rh, activePlugin, TESTPROFILENAME)
+        sut.inputProfileName = InputProfileName(rh, localProfileManager, TESTPROFILENAME)
         sut.doAction(object : Callback() {
             override fun run() {
                 assertThat(result.success).isTrue()
@@ -99,7 +99,7 @@ class ActionProfileSwitchTest : ActionsTestBase() {
     }
 
     @Test fun toJSONTest() {
-        sut.inputProfileName = InputProfileName(rh, activePlugin, "Test")
+        sut.inputProfileName = InputProfileName(rh, localProfileManager, "Test")
         JSONAssert.assertEquals(STRING_JSON, sut.toJSON(), true)
     }
 
