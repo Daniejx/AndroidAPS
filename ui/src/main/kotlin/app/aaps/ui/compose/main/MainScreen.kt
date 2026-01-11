@@ -27,7 +27,7 @@ import app.aaps.core.data.plugin.PluginType
 import app.aaps.core.interfaces.plugin.PluginBase
 import app.aaps.core.ui.compose.AapsTheme
 import app.aaps.ui.compose.actions.ActionsScreen
-import app.aaps.ui.compose.actions.ActionsViewModel
+import app.aaps.ui.compose.actions.viewmodels.ActionsViewModel
 import app.aaps.ui.compose.alertDialogs.AboutAlertDialog
 import app.aaps.ui.compose.alertDialogs.AboutDialogData
 import kotlinx.coroutines.launch

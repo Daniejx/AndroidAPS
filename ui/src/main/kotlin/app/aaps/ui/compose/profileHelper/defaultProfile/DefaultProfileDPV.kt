@@ -1,4 +1,4 @@
-package app.aaps.ui.defaultProfile
+package app.aaps.ui.compose.profileHelper.defaultProfile
 
 import app.aaps.core.data.model.GlucoseUnit
 import app.aaps.core.interfaces.profile.ProfileUtil

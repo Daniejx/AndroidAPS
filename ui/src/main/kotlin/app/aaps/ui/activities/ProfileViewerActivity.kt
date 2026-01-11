@@ -43,11 +43,11 @@ import app.aaps.core.ui.R
 import app.aaps.core.ui.compose.AapsTheme
 import app.aaps.core.ui.compose.LocalPreferences
 import app.aaps.core.ui.compose.LocalRxBus
-import app.aaps.ui.compose.profileViewer.ProfileCompareContent
-import app.aaps.ui.compose.profileViewer.ProfileCompareRow
-import app.aaps.ui.compose.profileViewer.ProfileSingleContent
-import app.aaps.ui.compose.profileViewer.ProfileViewerData
-import app.aaps.ui.compose.profileViewer.ProfileViewerScreen
+import app.aaps.ui.compose.profileManagement.ProfileCompareContent
+import app.aaps.ui.compose.profileManagement.ProfileCompareRow
+import app.aaps.ui.compose.profileManagement.ProfileSingleContent
+import app.aaps.ui.compose.profileManagement.ProfileViewerData
+import app.aaps.ui.compose.profileManagement.ProfileViewerScreen
 import dagger.android.support.DaggerAppCompatActivity
 import kotlinx.coroutines.runBlocking
 import org.json.JSONObject

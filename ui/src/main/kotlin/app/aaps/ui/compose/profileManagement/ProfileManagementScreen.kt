@@ -58,7 +58,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.lerp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import app.aaps.core.data.model.PS
+import app.aaps.core.data.model.EPS
 import app.aaps.core.data.time.T
 import app.aaps.core.interfaces.profile.ProfileSource
 import app.aaps.core.ui.compose.AapsTheme
@@ -67,7 +67,6 @@ import app.aaps.core.ui.compose.icons.ProfileSwitch
 import app.aaps.ui.R
 import app.aaps.ui.compose.components.ContentContainer
 import app.aaps.ui.compose.profileManagement.viewmodels.ProfileManagementViewModel
-import app.aaps.ui.compose.profileViewer.ProfileSingleContent
 import kotlin.math.absoluteValue
 
 /**
@@ -387,30 +386,30 @@ private fun ProfileCarouselCard(
     basalSum: Double,
     isActive: Boolean,
     hasErrors: Boolean,
-    activeProfileSwitch: PS?,
+    activeProfileSwitch: EPS?,
     nextProfileName: String?,
     formatBasalSum: (Double) -> String,
     modifier: Modifier = Modifier
 ) {
     // Check if active profile has modifications (percentage, timeshift, or duration)
-    val isModified = activeProfileSwitch?.let { ps ->
-        ps.percentage != 100 || ps.timeshift != 0L || ps.duration != 0L
+    val isModified = activeProfileSwitch?.let { eps ->
+        eps.originalPercentage != 100 || eps.originalTimeshift != 0L || eps.originalDuration != 0L
     } ?: false
 
     // Calculate progress for temporary profiles with auto-update
-    val hasDuration = activeProfileSwitch?.duration?.let { it > 0L } ?: false
+    val hasDuration = activeProfileSwitch?.originalDuration?.let { it > 0L } ?: false
     var progress by remember { mutableFloatStateOf(0f) }
 
     // Auto-update progress every 30 seconds
     LaunchedEffect(isActive, hasDuration, activeProfileSwitch?.timestamp) {
         if (isActive && hasDuration) {
-            val ps = activeProfileSwitch!!
+            val eps = activeProfileSwitch!!
             while (true) {
                 val now = System.currentTimeMillis()
-                val elapsed = now - ps.timestamp
-                val remaining = ps.duration - elapsed
+                val elapsed = now - eps.timestamp
+                val remaining = eps.originalDuration - elapsed
                 progress = if (remaining > 0) {
-                    (elapsed.toFloat() / ps.duration.toFloat()).coerceIn(0f, 1f)
+                    (elapsed.toFloat() / eps.originalDuration.toFloat()).coerceIn(0f, 1f)
                 } else 1f
                 delay(30_000L) // Update every 30 seconds
             }
@@ -508,12 +507,12 @@ private fun ProfileCarouselCard(
                     )
 
                     // Percentage and timeshift for active profile
-                    activeProfileSwitch?.let { ps ->
+                    activeProfileSwitch?.let { eps ->
                         val details = buildString {
-                            if (ps.percentage != 100) {
-                                append("${ps.percentage}%")
+                            if (eps.originalPercentage != 100) {
+                                append("${eps.originalPercentage}%")
                             }
-                            val timeshiftHours = T.msecs(ps.timeshift).hours().toInt()
+                            val timeshiftHours = T.msecs(eps.originalTimeshift).hours().toInt()
                             if (timeshiftHours != 0) {
                                 if (isNotEmpty()) append(" ")
                                 append(if (timeshiftHours > 0) "+${timeshiftHours}h" else "${timeshiftHours}h")

@@ -61,9 +61,9 @@ import app.aaps.core.interfaces.utils.DateUtil
 import app.aaps.core.objects.profile.ProfileSealed
 import app.aaps.core.ui.compose.NumberInputRow
 import app.aaps.ui.R
-import app.aaps.ui.compose.profileViewer.ProfileCompareContent
-import app.aaps.ui.compose.profileViewer.ProfileCompareRow
-import app.aaps.ui.compose.profileViewer.viewmodels.ProfileHelperViewModel
+import app.aaps.ui.compose.profileManagement.ProfileCompareContent
+import app.aaps.ui.compose.profileManagement.ProfileCompareRow
+import app.aaps.ui.compose.profileManagement.viewmodels.ProfileHelperViewModel
 import app.aaps.ui.compose.stats.TddStatsCompose
 import java.text.DecimalFormat
 

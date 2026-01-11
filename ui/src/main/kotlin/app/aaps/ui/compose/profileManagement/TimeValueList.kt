@@ -1,4 +1,4 @@
-package app.aaps.plugins.main.profile
+package app.aaps.ui.compose.profileManagement
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -29,7 +29,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import app.aaps.core.ui.compose.SliderWithButtons
 import app.aaps.core.ui.compose.pickers.HourWheelPicker
-import app.aaps.plugins.main.R
+import app.aaps.core.ui.R
+import app.aaps.ui.compose.profileManagement.viewmodels.TimeValue
 import java.text.DecimalFormat
 
 @Composable

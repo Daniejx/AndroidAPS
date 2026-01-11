@@ -1,4 +1,4 @@
-package app.aaps.ui.compose.profileViewer.viewmodels
+package app.aaps.ui.compose.profileManagement.viewmodels
 
 import android.content.Context
 import androidx.lifecycle.ViewModel
@@ -20,8 +20,8 @@ import app.aaps.core.objects.profile.ProfileSealed
 import app.aaps.ui.R
 import app.aaps.ui.compose.profileHelper.ProfileType
 import app.aaps.ui.compose.stats.TddStatsData
-import app.aaps.ui.defaultProfile.DefaultProfile
-import app.aaps.ui.defaultProfile.DefaultProfileDPV
+import app.aaps.ui.compose.profileHelper.defaultProfile.DefaultProfile
+import app.aaps.ui.compose.profileHelper.defaultProfile.DefaultProfileDPV
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow

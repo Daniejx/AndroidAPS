@@ -1,4 +1,4 @@
-package app.aaps.ui.compose.profileViewer
+package app.aaps.ui.compose.profileManagement
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column

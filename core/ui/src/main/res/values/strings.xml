@@ -752,4 +752,25 @@
     <!--    Playback-->
     <string name="audio_playback_attribution">"AAPS plays audio"</string>
 
+    <!-- ProfileEditor -->
+    <string name="dia_short">DIA</string>
+    <string name="basal_short">BAS</string>
+    <string name="target_short">TARG</string>
+    <string name="profile_name">Profile name:</string>
+    <string name="edit_profile_name">Edit profile name</string>
+    <string name="units_colon">Units:</string>
+    <string name="unsaved_changes">Unsaved changes</string>
+    <string name="unsaved_changes_message">You have unsaved changes. What would you like to do?</string>
+    <string name="discard">Discard</string>
+    <string name="ic_dynamic_label_warning">Your algorithm can provide dynamic calculation of IC. Values below cen be used only as a fallback in case of missing data or as a reference value only</string>
+    <string name="isf_dynamic_label_warning">Your algorithm can provide dynamic calculation of ISF. Values below can be used only as a fallback in case of missing data or as a reference value only</string>
+    <string name="add_time_block">Add time block</string>
+    <string name="remove_entry">Remove entry</string>
+    <string name="target_low_label">Low</string>
+    <string name="target_high_label">High</string>
+    <string name="select_profile">Select profile to edit</string>
+    <string name="a11y_add_new_profile">add new profile</string>
+    <string name="a11y_clone_profile">clone current profile</string>
+    <string name="a11y_delete_current_profile">delete current profile</string>
+
 </resources>

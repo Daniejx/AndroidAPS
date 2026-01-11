@@ -1,4 +1,4 @@
-package app.aaps.plugins.main.profile
+package app.aaps.ui.compose.profileManagement
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -62,7 +62,10 @@ import app.aaps.core.interfaces.profile.ProfileErrorType
 import app.aaps.core.objects.profile.ProfileSealed
 import app.aaps.core.ui.compose.SliderWithButtons
 import app.aaps.core.ui.compose.ValueInputDialog
-import app.aaps.plugins.main.R
+import app.aaps.core.ui.R
+import app.aaps.ui.compose.profileManagement.viewmodels.ProfileEditorViewModel
+import app.aaps.ui.compose.profileManagement.viewmodels.SingleProfileState
+import app.aaps.ui.compose.profileManagement.viewmodels.ProfileUiState
 import java.text.DecimalFormat
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -717,4 +720,3 @@ private fun TargetContent(
         }
     }
 }
-

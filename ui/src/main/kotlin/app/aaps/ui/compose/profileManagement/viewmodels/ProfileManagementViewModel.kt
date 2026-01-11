@@ -4,7 +4,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import app.aaps.core.data.model.EPS
 import app.aaps.core.data.model.GlucoseUnit
-import app.aaps.core.data.model.PS
 import app.aaps.core.data.model.TT
 import app.aaps.core.data.time.T
 import app.aaps.core.data.ue.Action
@@ -92,13 +91,16 @@ class ProfileManagementViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 val profiles = localProfileManager.profiles
-                val activeProfileSwitch = profileFunction.getRequestedProfile()
-                val activeProfileName = activeProfileSwitch?.profileName
+                val now = dateUtil.now()
+                val activeEps = persistenceLayer.getEffectiveProfileSwitchActiveAt(now)
+                val activeProfileName = activeEps?.originalProfileName
 
-                // On initial load, navigate to active profile
+                // Navigate to active profile on initial load or when active profile changes
                 val activeIndex = profiles.indexOfFirst { it.name == activeProfileName }
-                val currentIndex = if (activeIndex >= 0 && _uiState.value.isLoading) {
-                    // First load - start at active profile
+                val previousActiveProfileName = _uiState.value.activeProfileName
+                val activeProfileChanged = previousActiveProfileName != null && previousActiveProfileName != activeProfileName
+                val currentIndex = if (activeIndex >= 0 && (_uiState.value.isLoading || activeProfileChanged)) {
+                    // First load or active profile changed - scroll to active profile
                     localProfileManager.currentProfileIndex = activeIndex
                     activeIndex
                 } else {
@@ -106,18 +108,17 @@ class ProfileManagementViewModel @Inject constructor(
                 }
 
                 // Calculate remaining time for active profile
-                val remainingTime = activeProfileSwitch?.let { ps ->
-                    if (ps.duration > 0) {
-                        val endTime = ps.timestamp + ps.duration
-                        val now = dateUtil.now()
+                val remainingTime = activeEps?.let { eps ->
+                    if (eps.originalDuration > 0) {
+                        val endTime = eps.timestamp + eps.originalDuration
                         if (endTime > now) endTime - now else 0L
                     } else null
                 }
 
-                // Get the profile that will be active after current one ends
-                val nextProfileName = activeProfileSwitch?.let { ps ->
-                    if (ps.duration > 0) {
-                        val afterEnd = ps.end + 1
+                // Get the profile that will be active after current one ends (use PS as EPS doesn't exist yet)
+                val nextProfileName = activeEps?.let { eps ->
+                    if (eps.originalDuration > 0) {
+                        val afterEnd = eps.timestamp + eps.originalDuration + 1
                         persistenceLayer.getProfileSwitchActiveAt(afterEnd)?.profileName
                     } else null
                 }
@@ -151,7 +152,7 @@ class ProfileManagementViewModel @Inject constructor(
                         profiles = profiles,
                         currentProfileIndex = currentIndex,
                         activeProfileName = activeProfileName,
-                        activeProfileSwitch = activeProfileSwitch,
+                        activeProfileSwitch = activeEps,
                         nextProfileName = nextProfileName,
                         remainingTimeMs = remainingTime,
                         basalSums = basalSums,
@@ -414,7 +415,7 @@ data class ProfileManagementUiState(
     val profiles: List<ProfileSource.SingleProfile> = emptyList(),
     val currentProfileIndex: Int = 0,
     val activeProfileName: String? = null,
-    val activeProfileSwitch: PS? = null,
+    val activeProfileSwitch: EPS? = null,
     val nextProfileName: String? = null,
     val remainingTimeMs: Long? = null,
     val basalSums: List<Double> = emptyList(),

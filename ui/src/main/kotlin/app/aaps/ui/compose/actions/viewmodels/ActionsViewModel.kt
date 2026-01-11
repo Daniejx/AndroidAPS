@@ -1,4 +1,4 @@
-package app.aaps.ui.compose.actions
+package app.aaps.ui.compose.actions.viewmodels
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -14,6 +14,7 @@ import app.aaps.core.interfaces.logging.UserEntryLogger
 import app.aaps.core.interfaces.plugin.ActivePlugin
 import app.aaps.core.interfaces.profile.ProfileFunction
 import app.aaps.core.interfaces.pump.WarnColors
+import app.aaps.core.interfaces.pump.actions.CustomActionType
 import app.aaps.core.interfaces.queue.Callback
 import app.aaps.core.interfaces.queue.CommandQueue
 import app.aaps.core.interfaces.resources.ResourceHelper
@@ -35,6 +36,10 @@ import app.aaps.core.keys.interfaces.IntPreferenceKey
 import app.aaps.core.keys.interfaces.Preferences
 import app.aaps.core.objects.extensions.toStringMedium
 import app.aaps.core.objects.extensions.toStringShort
+import app.aaps.core.ui.R
+import app.aaps.ui.compose.actions.ActionsUiState
+import app.aaps.ui.compose.actions.StatusItem
+import app.aaps.ui.compose.actions.StatusLevel
 import io.reactivex.rxjava3.disposables.CompositeDisposable
 import io.reactivex.rxjava3.kotlin.plusAssign
 import kotlinx.coroutines.Dispatchers
@@ -135,7 +140,7 @@ class ActionsViewModel @Inject constructor(
                 if (activeExtendedBolus != null) {
                     showExtendedBolus = false
                     showCancelExtendedBolus = true
-                    cancelExtendedBolusText = rh.gs(app.aaps.core.ui.R.string.cancel) + " " +
+                    cancelExtendedBolusText = rh.gs(R.string.cancel) + " " +
                         activeExtendedBolus.toStringMedium(dateUtil, rh)
                 } else {
                     showExtendedBolus = true
@@ -160,7 +165,7 @@ class ActionsViewModel @Inject constructor(
                 if (activeTemp != null) {
                     showTempBasal = false
                     showCancelTempBasal = true
-                    cancelTempBasalText = rh.gs(app.aaps.core.ui.R.string.cancel) + " " +
+                    cancelTempBasalText = rh.gs(R.string.cancel) + " " +
                         activeTemp.toStringShort(rh)
                 } else {
                     showTempBasal = true
@@ -213,7 +218,7 @@ class ActionsViewModel @Inject constructor(
         val levelPercent = if (bgSource.sensorBatteryLevel != -1) bgSource.sensorBatteryLevel / 100f else -1f
 
         return StatusItem(
-            label = rh.gs(app.aaps.core.ui.R.string.sensor_label),
+            label = rh.gs(R.string.sensor_label),
             age = event?.let { formatAge(it.timestamp) } ?: "-",
             ageStatus = event?.let { getAgeStatus(it.timestamp, IntKey.OverviewSageWarning, IntKey.OverviewSageCritical) } ?: StatusLevel.UNSPECIFIED,
             agePercent = event?.let { getAgePercent(it.timestamp, IntKey.OverviewSageCritical) } ?: 0f,
@@ -230,7 +235,7 @@ class ActionsViewModel @Inject constructor(
         }
         val pump = activePlugin.activePump
         val reservoirLevel = pump.reservoirLevel
-        val insulinUnit = rh.gs(app.aaps.core.ui.R.string.insulin_unit_shortname)
+        val insulinUnit = rh.gs(R.string.insulin_unit_shortname)
 
         val level: String? = if (reservoirLevel > 0) {
             if (isPatchPump && reservoirLevel >= maxReading) {
@@ -241,7 +246,7 @@ class ActionsViewModel @Inject constructor(
         } else null
 
         return StatusItem(
-            label = rh.gs(app.aaps.core.ui.R.string.insulin_label),
+            label = rh.gs(R.string.insulin_label),
             age = event?.let { formatAge(it.timestamp) } ?: "-",
             ageStatus = event?.let { getAgeStatus(it.timestamp, IntKey.OverviewIageWarning, IntKey.OverviewIageCritical) } ?: StatusLevel.UNSPECIFIED,
             agePercent = event?.let { getAgePercent(it.timestamp, IntKey.OverviewIageCritical) } ?: 0f,
@@ -256,7 +261,7 @@ class ActionsViewModel @Inject constructor(
         val event = withContext(Dispatchers.IO) {
             persistenceLayer.getLastTherapyRecordUpToNow(TE.Type.CANNULA_CHANGE)
         }
-        val insulinUnit = rh.gs(app.aaps.core.ui.R.string.insulin_unit_shortname)
+        val insulinUnit = rh.gs(R.string.insulin_unit_shortname)
 
         // Calculate usage since last cannula change
         val usage = if (event != null) {
@@ -265,7 +270,7 @@ class ActionsViewModel @Inject constructor(
             }
         } else 0.0
 
-        val label = if (isPatchPump) rh.gs(app.aaps.core.ui.R.string.patch_pump) else rh.gs(app.aaps.core.ui.R.string.cannula)
+        val label = if (isPatchPump) rh.gs(R.string.patch_pump) else rh.gs(R.string.cannula)
         val iconRes = if (isPatchPump) app.aaps.core.objects.R.drawable.ic_patch_pump_outline else app.aaps.core.objects.R.drawable.ic_cp_age_cannula
 
         return StatusItem(
@@ -293,11 +298,11 @@ class ActionsViewModel @Inject constructor(
         val level = if (batteryLevel != null && pump.model().supportBatteryLevel) {
             "${batteryLevel}%"
         } else {
-            rh.gs(app.aaps.core.ui.R.string.value_unavailable_short)
+            rh.gs(R.string.value_unavailable_short)
         }
 
         return StatusItem(
-            label = rh.gs(app.aaps.core.ui.R.string.pb_label),
+            label = rh.gs(R.string.pb_label),
             age = event?.let { formatAge(it.timestamp) } ?: "-",
             ageStatus = event?.let { getAgeStatus(it.timestamp, IntKey.OverviewBageWarning, IntKey.OverviewBageCritical) } ?: StatusLevel.UNSPECIFIED,
             agePercent = event?.let { getAgePercent(it.timestamp, IntKey.OverviewBageCritical) } ?: 0f,
@@ -375,7 +380,7 @@ class ActionsViewModel @Inject constructor(
         }
     }
 
-    fun executeCustomAction(actionType: app.aaps.core.interfaces.pump.actions.CustomActionType) {
+    fun executeCustomAction(actionType: CustomActionType) {
         activePlugin.activePump.executeCustomAction(actionType)
     }
 }
