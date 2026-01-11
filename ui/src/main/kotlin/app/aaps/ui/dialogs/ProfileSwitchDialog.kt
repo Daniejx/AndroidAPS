@@ -20,6 +20,7 @@ import app.aaps.core.interfaces.db.PersistenceLayer
 import app.aaps.core.interfaces.logging.LTag
 import app.aaps.core.interfaces.logging.UserEntryLogger
 import app.aaps.core.interfaces.plugin.ActivePlugin
+import app.aaps.core.interfaces.profile.LocalProfileManager
 import app.aaps.core.interfaces.profile.ProfileFunction
 import app.aaps.core.interfaces.profile.ProfileUtil
 import app.aaps.core.interfaces.protection.ProtectionCheck
@@ -47,6 +48,7 @@ class ProfileSwitchDialog : DialogFragmentWithDate() {
     @Inject lateinit var profileFunction: ProfileFunction
     @Inject lateinit var profileUtil: ProfileUtil
     @Inject lateinit var activePlugin: ActivePlugin
+    @Inject lateinit var localProfileManager: LocalProfileManager
     @Inject lateinit var persistenceLayer: PersistenceLayer
     @Inject lateinit var uel: UserEntryLogger
     @Inject lateinit var config: Config
@@ -115,11 +117,11 @@ class ProfileSwitchDialog : DialogFragmentWithDate() {
 
         // profile
         context?.let { context ->
-            val profileStore = activePlugin.activeProfileSource.profile ?: return
+            val profileStore = localProfileManager.profile ?: return
             val profileListToCheck = profileStore.getProfileList()
             val profileList = ArrayList<CharSequence>()
             for (profileName in profileListToCheck) {
-                val profileToCheck = activePlugin.activeProfileSource.profile?.getSpecificProfile(profileName.toString())
+                val profileToCheck = localProfileManager.profile?.getSpecificProfile(profileName.toString())
                 if (profileToCheck != null && ProfileSealed.Pure(profileToCheck, activePlugin).isValid("ProfileSwitch", activePlugin.activePump, config, rh, rxBus, hardLimits, false).isValid)
                     profileList.add(profileName)
             }
@@ -163,7 +165,7 @@ class ProfileSwitchDialog : DialogFragmentWithDate() {
 
     override fun submit(): Boolean {
         if (_binding == null) return false
-        val profileStore = activePlugin.activeProfileSource.profile
+        val profileStore = localProfileManager.profile
             ?: return false
 
         val actions: LinkedList<String> = LinkedList()

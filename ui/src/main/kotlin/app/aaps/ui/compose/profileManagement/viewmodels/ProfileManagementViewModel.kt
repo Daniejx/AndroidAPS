@@ -173,7 +173,7 @@ class ProfileManagementViewModel @Inject constructor(
     /**
      * Convert SingleProfile to PureProfile
      */
-    private fun toPureProfile(singleProfile: ProfileSource.SingleProfile): PureProfile? {
+    private fun toPureProfile(singleProfile: LocalProfileManager.SingleProfile): PureProfile? {
         val profile = JSONObject().apply {
             put("dia", singleProfile.dia)
             put("carbratio", singleProfile.ic)
@@ -323,7 +323,7 @@ class ProfileManagementViewModel @Inject constructor(
         }
 
         val profileName = profiles[profileIndex].name
-        val profileStore = activePlugin.activeProfileSource.profile ?: run {
+        val profileStore = localProfileManager.profile ?: run {
             aapsLogger.error(LTag.UI, "No profile store available")
             return false
         }
@@ -412,7 +412,7 @@ class ProfileManagementViewModel @Inject constructor(
  * UI state for ProfileManagementScreen
  */
 data class ProfileManagementUiState(
-    val profiles: List<ProfileSource.SingleProfile> = emptyList(),
+    val profiles: List<LocalProfileManager.SingleProfile> = emptyList(),
     val currentProfileIndex: Int = 0,
     val activeProfileName: String? = null,
     val activeProfileSwitch: EPS? = null,

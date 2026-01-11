@@ -5,6 +5,7 @@ import app.aaps.core.interfaces.db.PersistenceLayer
 import app.aaps.core.interfaces.logging.AAPSLogger
 import app.aaps.core.interfaces.logging.LTag
 import app.aaps.core.interfaces.plugin.ActivePlugin
+import app.aaps.core.interfaces.profile.LocalProfileManager
 import app.aaps.core.interfaces.profile.ProfileFunction
 import app.aaps.core.interfaces.sync.DataSyncSelector
 import app.aaps.core.interfaces.sync.DataSyncSelectorXdrip
@@ -26,6 +27,7 @@ class DataSyncSelectorXdripImpl @Inject constructor(
     private val dateUtil: DateUtil,
     private val profileFunction: ProfileFunction,
     private val activePlugin: ActivePlugin,
+    private val localProfileManager: LocalProfileManager,
     private val xdripBroadcast: Lazy<XDripBroadcast>,
     private val persistenceLayer: PersistenceLayer,
     private val preferences: Preferences,
@@ -556,8 +558,8 @@ class DataSyncSelectorXdripImpl @Inject constructor(
         val lastChange = preferences.get(LongNonKey.LocalProfileLastChange)
         if (lastChange == 0L) return
         if (lastChange > lastSync) {
-            if (activePlugin.activeProfileSource.profile?.allProfilesValid != true) return
-            val profileStore = activePlugin.activeProfileSource.profile
+            if (localProfileManager.profile?.allProfilesValid != true) return
+            val profileStore = localProfileManager.profile
             val profileJson = profileStore?.getData() ?: return
             // add for v3
             if (JsonHelper.safeGetLongAllowNull(profileJson, "date") == null)

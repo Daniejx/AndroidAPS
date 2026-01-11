@@ -22,7 +22,7 @@ composeBom = "2025.12.01"
 navigationCompose = "2.9.6"
 lifecycleRuntimeKtx = "2.10.0"
 materialPullRefresh = "1.2.0"
-vico = "2.3.6"
+vico = "2.4.1"
 
 [plugins]
 android-library = { id = "com.android.library" }

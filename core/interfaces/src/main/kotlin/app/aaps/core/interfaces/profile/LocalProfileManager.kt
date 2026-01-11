@@ -1,5 +1,7 @@
 package app.aaps.core.interfaces.profile
 
+import org.json.JSONArray
+
 /**
  * Interface for managing local profiles.
  * Provides methods for profile CRUD operations, persistence, and state management.
@@ -10,9 +12,36 @@ package app.aaps.core.interfaces.profile
 interface LocalProfileManager {
 
     /**
+     * SingleProfile stores a name of a profile in addition to PureProfile
+     */
+    class SingleProfile(
+        var name: String,
+        var mgdl: Boolean,
+        var dia: Double,
+        var ic: JSONArray,
+        var isf: JSONArray,
+        var basal: JSONArray,
+        var targetLow: JSONArray,
+        var targetHigh: JSONArray,
+    ) {
+
+        fun deepClone(): SingleProfile =
+            SingleProfile(
+                name = name,
+                mgdl = mgdl,
+                dia = dia,
+                ic = JSONArray(ic.toString()),
+                isf = JSONArray(isf.toString()),
+                basal = JSONArray(basal.toString()),
+                targetLow = JSONArray(targetLow.toString()),
+                targetHigh = JSONArray(targetHigh.toString())
+            )
+    }
+
+    /**
      * List of all profiles in the store.
      */
-    val profiles: List<ProfileSource.SingleProfile>
+    val profiles: List<SingleProfile>
 
     /**
      * Number of profiles in the store.
@@ -35,16 +64,11 @@ interface LocalProfileManager {
     val profile: ProfileStore?
 
     /**
-     * Formatted name of the current profile (includes basal sum).
-     */
-    val profileName: String
-
-    /**
      * Get the currently selected profile.
      *
      * @return The current SingleProfile or null if no profiles exist
      */
-    fun currentProfile(): ProfileSource.SingleProfile?
+    fun currentProfile(): SingleProfile?
 
     /**
      * Get the currently edited profile as a PureProfile.
@@ -105,7 +129,7 @@ interface LocalProfileManager {
      * @param newName Name for the new profile
      * @return New SingleProfile
      */
-    fun copyFrom(pureProfile: PureProfile, newName: String): ProfileSource.SingleProfile
+    fun copyFrom(pureProfile: PureProfile, newName: String): SingleProfile
 
     /**
      * Create a new empty profile with default values.
@@ -126,7 +150,7 @@ interface LocalProfileManager {
      *
      * @param profile Profile to add
      */
-    fun addProfile(profile: ProfileSource.SingleProfile)
+    fun addProfile(profile: SingleProfile)
 
     /**
      * Remove the currently selected profile.

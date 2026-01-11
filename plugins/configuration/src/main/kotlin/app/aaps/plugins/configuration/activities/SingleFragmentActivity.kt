@@ -18,7 +18,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -35,6 +34,7 @@ import app.aaps.core.interfaces.protection.ProtectionCheck
 import app.aaps.core.interfaces.ui.UiInteraction
 import app.aaps.core.keys.interfaces.PreferenceVisibilityContext
 import app.aaps.core.ui.compose.AapsTheme
+import app.aaps.core.ui.compose.AapsTopAppBar
 import app.aaps.core.ui.compose.ComposablePluginContent
 import app.aaps.core.ui.compose.LocalPreferences
 import app.aaps.core.ui.compose.LocalRxBus
@@ -83,7 +83,6 @@ class SingleFragmentActivity : DaggerAppCompatActivityWithResult() {
         }
     }
 
-    @OptIn(ExperimentalMaterial3Api::class)
     private fun setupComposeContent(plugin: PluginBase) {
         val composeContent = plugin.getComposeContent() ?: return
 
@@ -129,7 +128,7 @@ class SingleFragmentActivity : DaggerAppCompatActivityWithResult() {
                         // Show plugin content
                         Scaffold(
                             topBar = {
-                                TopAppBar(
+                                AapsTopAppBar(
                                     title = { Text(toolbarConfig.title) },
                                     navigationIcon = { toolbarConfig.navigationIcon() },
                                     actions = { toolbarConfig.actions(this) }
@@ -177,7 +176,7 @@ class SingleFragmentActivity : DaggerAppCompatActivityWithResult() {
             ).commit()
         }
 
-        overview.setVersionView(findViewById<TextView>(R.id.version))
+        overview.setVersionView(findViewById(R.id.version))
 
         // Add menu items for Fragment-based plugins
         val singleFragmentMenuProvider = object : MenuProvider {

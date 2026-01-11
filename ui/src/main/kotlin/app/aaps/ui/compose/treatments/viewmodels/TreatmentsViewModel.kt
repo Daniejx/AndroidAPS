@@ -6,6 +6,7 @@ import app.aaps.core.interfaces.logging.AAPSLogger
 import app.aaps.core.interfaces.logging.UserEntryLogger
 import app.aaps.core.interfaces.maintenance.ImportExportPrefs
 import app.aaps.core.interfaces.plugin.ActivePlugin
+import app.aaps.core.interfaces.profile.LocalProfileManager
 import app.aaps.core.interfaces.profile.ProfileFunction
 import app.aaps.core.interfaces.profile.ProfileUtil
 import app.aaps.core.interfaces.resources.ResourceHelper
@@ -25,6 +26,7 @@ class TreatmentsViewModel @Inject constructor(
     val profileUtil: ProfileUtil,
     val profileFunction: ProfileFunction,
     val activePlugin: ActivePlugin,
+    val localProfileManager: LocalProfileManager,
     val rh: ResourceHelper,
     val translator: Translator,
     val dateUtil: DateUtil,

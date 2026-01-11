@@ -51,26 +51,6 @@ class ProfilePlugin @Inject constructor(
         localProfileManager.loadSettings()
     }
 
-    // Delegate to LocalProfileManager
-    var isEdited: Boolean
-        get() = localProfileManager.isEdited
-        set(value) { localProfileManager.isEdited = value }
-
-    val numOfProfiles: Int
-        get() = localProfileManager.numOfProfiles
-
-    override var currentProfileIndex: Int
-        get() = localProfileManager.currentProfileIndex
-        set(value) { localProfileManager.currentProfileIndex = value }
-
-    override fun currentProfile(): ProfileSource.SingleProfile? = localProfileManager.currentProfile()
-
-    override val profile: ProfileStore?
-        get() = localProfileManager.profile
-
-    override val profileName: String
-        get() = localProfileManager.profileName
-
     /**
      * Validate profile and show Toast for first error (legacy UI).
      * New Compose UI should use localProfileManager.validateProfile() directly.
@@ -93,10 +73,7 @@ class ProfilePlugin @Inject constructor(
     }
 
     @Synchronized
-    fun getEditedProfile(): PureProfile? = localProfileManager.getEditedProfile()
-
-    @Synchronized
-    override fun storeSettings(activity: FragmentActivity?, timestamp: Long) {
+    fun storeSettings(activity: FragmentActivity?, timestamp: Long) {
         localProfileManager.storeSettings(timestamp)
         // Show dot warning dialog for legacy UI
         val errors = localProfileManager.validateProfile()
@@ -106,20 +83,4 @@ class ProfilePlugin @Inject constructor(
             }
         }
     }
-
-    @Synchronized
-    override fun loadFromStore(store: ProfileStore) = localProfileManager.loadFromStore(store)
-
-    override fun copyFrom(pureProfile: PureProfile, newName: String): ProfileSource.SingleProfile =
-        localProfileManager.copyFrom(pureProfile, newName)
-
-    override fun addProfile(p: ProfileSource.SingleProfile) = localProfileManager.addProfile(p)
-
-    fun addNewProfile() = localProfileManager.addNewProfile()
-
-    fun cloneProfile() = localProfileManager.cloneProfile()
-
-    fun removeCurrentProfile() = localProfileManager.removeCurrentProfile()
-
-    fun loadSettings() = localProfileManager.loadSettings()
 }

@@ -21,6 +21,7 @@ import app.aaps.core.interfaces.logging.UserEntryLogger
 import app.aaps.core.interfaces.plugin.ActivePlugin
 import app.aaps.core.interfaces.plugin.PluginBaseWithPreferences
 import app.aaps.core.interfaces.plugin.PluginDescription
+import app.aaps.core.interfaces.profile.LocalProfileManager
 import app.aaps.core.interfaces.profile.Profile
 import app.aaps.core.interfaces.profile.ProfileFunction
 import app.aaps.core.interfaces.profile.ProfileStore
@@ -69,6 +70,7 @@ class AutotunePlugin @Inject constructor(
     private val profileFunction: ProfileFunction,
     private val dateUtil: DateUtil,
     private val activePlugin: ActivePlugin,
+    private val localProfileManager: LocalProfileManager,
     private val autotuneFS: AutotuneFS,
     private val autotuneIob: AutotuneIob,
     private val autotunePrep: AutotunePrep,
@@ -140,7 +142,7 @@ class AutotunePlugin @Inject constructor(
         calculationRunning = true
         lastNbDays = "" + daysBack
         lastRun = dateUtil.now()
-        val profileStore = activePlugin.activeProfileSource.profile
+        val profileStore = localProfileManager.profile
         if (profileStore == null) {
             result = rh.gs(app.aaps.core.ui.R.string.profileswitch_ismissing)
             rxBus.send(EventAutotuneUpdateGui())
@@ -368,24 +370,23 @@ class AutotunePlugin @Inject constructor(
 
     fun updateProfile(newProfile: ATProfile?) {
         if (newProfile == null) return
-        val profilePlugin = activePlugin.activeProfileSource
         val circadian = preferences.get(BooleanKey.AutotuneCircadianIcIsf)
-        val profileStore = activePlugin.activeProfileSource.profile ?: profileStoreProvider.get().with(JSONObject())
+        val profileStore = localProfileManager.profile ?: profileStoreProvider.get().with(JSONObject())
         val profileList: ArrayList<CharSequence> = profileStore.getProfileList()
         var indexLocalProfile = -1
         for (p in profileList.indices)
             if (profileList[p] == newProfile.profileName)
                 indexLocalProfile = p
         if (indexLocalProfile == -1) {
-            profilePlugin.addProfile(profilePlugin.copyFrom(newProfile.getProfile(circadian), newProfile.profileName))
+            localProfileManager.addProfile(localProfileManager.copyFrom(newProfile.getProfile(circadian), newProfile.profileName))
             return
         }
-        profilePlugin.currentProfileIndex = indexLocalProfile
-        profilePlugin.currentProfile()?.dia = newProfile.dia
-        profilePlugin.currentProfile()?.basal = newProfile.basal()
-        profilePlugin.currentProfile()?.ic = newProfile.ic(circadian)
-        profilePlugin.currentProfile()?.isf = newProfile.isf(circadian)
-        profilePlugin.storeSettings(timestamp = dateUtil.now())
+        localProfileManager.currentProfileIndex = indexLocalProfile
+        localProfileManager.currentProfile()?.dia = newProfile.dia
+        localProfileManager.currentProfile()?.basal = newProfile.basal()
+        localProfileManager.currentProfile()?.ic = newProfile.ic(circadian)
+        localProfileManager.currentProfile()?.isf = newProfile.isf(circadian)
+        localProfileManager.storeSettings(timestamp = dateUtil.now())
     }
 
     fun saveLastRun() {

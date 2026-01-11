@@ -26,6 +26,7 @@ import app.aaps.core.data.ue.ValueWithUnit
 import app.aaps.core.interfaces.aps.Loop
 import app.aaps.core.interfaces.logging.UserEntryLogger
 import app.aaps.core.interfaces.plugin.ActivePlugin
+import app.aaps.core.interfaces.profile.LocalProfileManager
 import app.aaps.core.interfaces.profile.ProfileFunction
 import app.aaps.core.interfaces.profile.ProfileStore
 import app.aaps.core.interfaces.profile.ProfileUtil
@@ -69,6 +70,7 @@ class AutotuneFragment : DaggerFragment() {
     @Inject lateinit var preferences: Preferences
     @Inject lateinit var dateUtil: DateUtil
     @Inject lateinit var activePlugin: ActivePlugin
+    @Inject lateinit var localProfileManager: LocalProfileManager
     @Inject lateinit var fabricPrivacy: FabricPrivacy
     @Inject lateinit var uel: UserEntryLogger
     @Inject lateinit var rh: ResourceHelper
@@ -107,7 +109,7 @@ class AutotuneFragment : DaggerFragment() {
         if (autotunePlugin.lastNbDays.isEmpty())
             autotunePlugin.lastNbDays = preferences.get(IntKey.AutotuneDefaultTuneDays).toString()
         val defaultValue = preferences.get(IntKey.AutotuneDefaultTuneDays).toDouble()
-        profileStore = activePlugin.activeProfileSource.profile ?: profileStoreProvider.get().with(JSONObject())
+        profileStore = localProfileManager.profile ?: profileStoreProvider.get().with(JSONObject())
         profileName = if (binding.profileList.text.toString() == rh.gs(app.aaps.core.ui.R.string.active)) "" else binding.profileList.text.toString()
         profileFunction.getProfile()?.let { currentProfile ->
             profile = atProfileProvider.get().with(profileStore.getSpecificProfile(profileName)?.let { ProfileSealed.Pure(value = it, activePlugin = null) } ?: currentProfile, LocalInsulin(""))
@@ -162,8 +164,7 @@ class AutotuneFragment : DaggerFragment() {
                     title = rh.gs(R.string.autotune_copy_localprofile_button),
                     message = rh.gs(R.string.autotune_copy_local_profile_message) + "\n" + localName,
                     ok = {
-                        val profilePlugin = activePlugin.activeProfileSource
-                        profilePlugin.addProfile(profilePlugin.copyFrom(tunedProfile.getProfile(circadian), localName))
+                        localProfileManager.addProfile(localProfileManager.copyFrom(tunedProfile.getProfile(circadian), localName))
                         uel.log(
                             action = Action.NEW_PROFILE,
                             source = Sources.Autotune,
@@ -328,7 +329,7 @@ class AutotuneFragment : DaggerFragment() {
     @Synchronized
     private fun updateGui() {
         _binding ?: return
-        profileStore = activePlugin.activeProfileSource.profile ?: profileStoreProvider.get().with(JSONObject())
+        profileStore = localProfileManager.profile ?: profileStoreProvider.get().with(JSONObject())
         profileName = if (binding.profileList.text.toString() == rh.gs(app.aaps.core.ui.R.string.active)) "" else binding.profileList.text.toString()
         profileFunction.getProfile()?.let { currentProfile ->
             profile = atProfileProvider.get().with(profileStore.getSpecificProfile(profileName)?.let { ProfileSealed.Pure(value = it, activePlugin = null) } ?: currentProfile, LocalInsulin(""))

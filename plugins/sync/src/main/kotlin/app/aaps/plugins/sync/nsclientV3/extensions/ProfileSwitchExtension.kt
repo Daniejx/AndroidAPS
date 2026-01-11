@@ -4,7 +4,7 @@ import app.aaps.core.data.model.IDs
 import app.aaps.core.data.model.PS
 import app.aaps.core.data.pump.defs.PumpType
 import app.aaps.core.data.time.T
-import app.aaps.core.interfaces.plugin.ActivePlugin
+import app.aaps.core.interfaces.profile.LocalProfileManager
 import app.aaps.core.interfaces.utils.DateUtil
 import app.aaps.core.interfaces.utils.DecimalFormatter
 import app.aaps.core.nssdk.localmodel.treatment.EventType
@@ -15,10 +15,10 @@ import app.aaps.core.objects.profile.ProfileSealed
 import org.json.JSONObject
 import java.security.InvalidParameterException
 
-fun NSProfileSwitch.toProfileSwitch(activePlugin: ActivePlugin, dateUtil: DateUtil): PS? {
+fun NSProfileSwitch.toProfileSwitch(localProfileManager: LocalProfileManager, dateUtil: DateUtil): PS? {
     val pureProfile =
         profileJson?.let { pureProfileFromJson(JSONObject(it), dateUtil) ?: return null }
-            ?: activePlugin.activeProfileSource.profile?.getSpecificProfile(profile) ?: return null
+            ?: localProfileManager.profile?.getSpecificProfile(profile) ?: return null
 
     val profileSealed = ProfileSealed.Pure(value = pureProfile, activePlugin = null)
 

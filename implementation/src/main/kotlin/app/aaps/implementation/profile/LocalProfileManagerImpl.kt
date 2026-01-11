@@ -11,7 +11,6 @@ import app.aaps.core.interfaces.profile.LocalProfileManager
 import app.aaps.core.interfaces.profile.Profile
 import app.aaps.core.interfaces.profile.ProfileErrorType
 import app.aaps.core.interfaces.profile.ProfileFunction
-import app.aaps.core.interfaces.profile.ProfileSource
 import app.aaps.core.interfaces.profile.ProfileStore
 import app.aaps.core.interfaces.profile.ProfileUtil
 import app.aaps.core.interfaces.profile.ProfileValidationError
@@ -22,7 +21,6 @@ import app.aaps.core.interfaces.rx.events.EventLocalProfileChanged
 import app.aaps.core.interfaces.rx.events.EventProfileStoreChanged
 import app.aaps.core.interfaces.ui.UiInteraction
 import app.aaps.core.interfaces.utils.DateUtil
-import app.aaps.core.interfaces.utils.DecimalFormatter
 import app.aaps.core.interfaces.utils.HardLimits
 import app.aaps.core.keys.LongNonKey
 import app.aaps.core.keys.ProfileComposedBooleanKey
@@ -35,6 +33,7 @@ import app.aaps.core.objects.extensions.pureProfileFromJson
 import app.aaps.core.objects.profile.ProfileSealed
 import app.aaps.core.ui.R
 import app.aaps.core.utils.JsonHelper
+import dagger.Lazy
 import org.json.JSONArray
 import org.json.JSONException
 import org.json.JSONObject
@@ -49,21 +48,20 @@ class LocalProfileManagerImpl @Inject constructor(
     private val rxBus: RxBus,
     private val rh: ResourceHelper,
     private val preferences: Preferences,
-    private val profileFunction: ProfileFunction,
+    private val profileFunction: Lazy<ProfileFunction>,
     private val profileUtil: ProfileUtil,
     private val activePlugin: ActivePlugin,
     private val hardLimits: HardLimits,
     private val dateUtil: DateUtil,
     private val config: Config,
     private val profileStoreProvider: Provider<ProfileStore>,
-    private val decimalFormatter: DecimalFormatter,
     private val uiInteraction: UiInteraction
 ) : LocalProfileManager {
 
     private var rawProfile: ProfileStore? = null
-    private var _profiles: ArrayList<ProfileSource.SingleProfile> = ArrayList()
+    private var _profiles: ArrayList<LocalProfileManager.SingleProfile> = ArrayList()
 
-    override val profiles: List<ProfileSource.SingleProfile>
+    override val profiles: List<LocalProfileManager.SingleProfile>
         get() = _profiles.toList()
 
     override val numOfProfiles: Int
@@ -76,12 +74,7 @@ class LocalProfileManagerImpl @Inject constructor(
     override val profile: ProfileStore?
         get() = rawProfile
 
-    override val profileName: String
-        get() = rawProfile?.getDefaultProfile()?.let {
-            decimalFormatter.to2Decimal(ProfileSealed.Pure(it, activePlugin).percentageBasalSum()) + "U "
-        } ?: "INVALID"
-
-    override fun currentProfile(): ProfileSource.SingleProfile? =
+    override fun currentProfile(): LocalProfileManager.SingleProfile? =
         if (numOfProfiles > 0 && currentProfileIndex < numOfProfiles) _profiles[currentProfileIndex] else null
 
     @Synchronized
@@ -181,7 +174,7 @@ class LocalProfileManagerImpl @Inject constructor(
             if (isExistingName(name)) continue
             try {
                 _profiles.add(
-                    ProfileSource.SingleProfile(
+                    LocalProfileManager.SingleProfile(
                         name = name,
                         mgdl = preferences.get(ProfileComposedBooleanKey.LocalProfileNumberedMgdl, i),
                         dia = preferences.get(ProfileComposedDoubleKey.LocalProfileNumberedDia, i),
@@ -225,7 +218,7 @@ class LocalProfileManagerImpl @Inject constructor(
     @Synchronized
     override fun loadFromStore(store: ProfileStore) {
         try {
-            val newProfiles: ArrayList<ProfileSource.SingleProfile> = ArrayList()
+            val newProfiles: ArrayList<LocalProfileManager.SingleProfile> = ArrayList()
             for (p in store.getProfileList()) {
                 val profile = store.getSpecificProfile(p.toString())
                 val validityCheck = profile?.let {
@@ -262,14 +255,14 @@ class LocalProfileManagerImpl @Inject constructor(
         }
     }
 
-    override fun copyFrom(pureProfile: PureProfile, newName: String): ProfileSource.SingleProfile {
+    override fun copyFrom(pureProfile: PureProfile, newName: String): LocalProfileManager.SingleProfile {
         var verifiedName = newName
         if (rawProfile?.getSpecificProfile(newName) != null) {
             verifiedName += " " + dateUtil.now().toString()
         }
         val profile = ProfileSealed.Pure(pureProfile, activePlugin)
         val pureJson = pureProfile.jsonObject
-        return ProfileSource.SingleProfile(
+        return LocalProfileManager.SingleProfile(
             name = verifiedName,
             mgdl = profile.units == GlucoseUnit.MGDL,
             dia = pureJson.getDouble("dia"),
@@ -290,9 +283,9 @@ class LocalProfileManagerImpl @Inject constructor(
             }
         }
         _profiles.add(
-            ProfileSource.SingleProfile(
+            LocalProfileManager.SingleProfile(
                 name = Constants.LOCAL_PROFILE + free,
-                mgdl = profileFunction.getUnits() == GlucoseUnit.MGDL,
+                mgdl = profileFunction.get().getUnits() == GlucoseUnit.MGDL,
                 dia = Constants.defaultDIA,
                 ic = JSONArray(Constants.DEFAULT_PROFILE_ARRAY),
                 isf = JSONArray(Constants.DEFAULT_PROFILE_ARRAY),
@@ -316,7 +309,7 @@ class LocalProfileManagerImpl @Inject constructor(
         isEdited = false
     }
 
-    override fun addProfile(profile: ProfileSource.SingleProfile) {
+    override fun addProfile(profile: LocalProfileManager.SingleProfile) {
         _profiles.add(profile)
         currentProfileIndex = _profiles.size - 1
         createAndStoreConvertedProfile()

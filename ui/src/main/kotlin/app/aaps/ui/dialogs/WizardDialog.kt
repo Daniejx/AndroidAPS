@@ -25,6 +25,7 @@ import app.aaps.core.interfaces.iob.IobCobCalculator
 import app.aaps.core.interfaces.logging.AAPSLogger
 import app.aaps.core.interfaces.logging.LTag
 import app.aaps.core.interfaces.plugin.ActivePlugin
+import app.aaps.core.interfaces.profile.LocalProfileManager
 import app.aaps.core.interfaces.profile.Profile
 import app.aaps.core.interfaces.profile.ProfileFunction
 import app.aaps.core.interfaces.profile.ProfileUtil
@@ -75,6 +76,7 @@ class WizardDialog : DaggerDialogFragment() {
     @Inject lateinit var profileFunction: ProfileFunction
     @Inject lateinit var profileUtil: ProfileUtil
     @Inject lateinit var activePlugin: ActivePlugin
+    @Inject lateinit var localProfileManager: LocalProfileManager
     @Inject lateinit var iobCobCalculator: IobCobCalculator
     @Inject lateinit var persistenceLayer: PersistenceLayer
     @Inject lateinit var dateUtil: DateUtil
@@ -380,7 +382,7 @@ class WizardDialog : DaggerDialogFragment() {
 
     private fun initDialog() {
         val profile = profileFunction.getProfile()
-        val profileStore = activePlugin.activeProfileSource.profile
+        val profileStore = localProfileManager.profile
         val tempTarget = runBlocking { persistenceLayer.getTemporaryTargetActiveAt(dateUtil.now()) }
 
         if (profile == null || profileStore == null) {
@@ -426,7 +428,7 @@ class WizardDialog : DaggerDialogFragment() {
 
     @SuppressLint("SetTextI18n")
     private fun calculateInsulin() {
-        val profileStore = activePlugin.activeProfileSource.profile ?: return // not initialized yet
+        val profileStore = localProfileManager.profile ?: return // not initialized yet
         var profileName = binding.profileList.text.toString()
         val specificProfile: Profile?
         if (profileName == rh.gs(app.aaps.core.ui.R.string.active)) {

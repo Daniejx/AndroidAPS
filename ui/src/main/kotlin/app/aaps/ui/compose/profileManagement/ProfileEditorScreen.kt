@@ -37,8 +37,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -60,6 +58,7 @@ import app.aaps.core.graph.IsfProfileGraphCompose
 import app.aaps.core.graph.TargetBgProfileGraphCompose
 import app.aaps.core.interfaces.profile.ProfileErrorType
 import app.aaps.core.objects.profile.ProfileSealed
+import app.aaps.core.ui.compose.AapsTopAppBar
 import app.aaps.core.ui.compose.SliderWithButtons
 import app.aaps.core.ui.compose.ValueInputDialog
 import app.aaps.core.ui.R
@@ -68,7 +67,6 @@ import app.aaps.ui.compose.profileManagement.viewmodels.SingleProfileState
 import app.aaps.ui.compose.profileManagement.viewmodels.ProfileUiState
 import java.text.DecimalFormat
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProfileEditorScreen(
     viewModel: ProfileEditorViewModel,
@@ -106,7 +104,7 @@ fun ProfileEditorScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
+            AapsTopAppBar(
                 title = { Text(stringResource(app.aaps.core.ui.R.string.localprofile)) },
                 navigationIcon = {
                     IconButton(onClick = handleBack) {
@@ -149,10 +147,7 @@ fun ProfileEditorScreen(
                         }
                     }
                     Spacer(Modifier.width(8.dp))
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface
-                )
+                }
             )
         },
         containerColor = MaterialTheme.colorScheme.surfaceContainerLowest

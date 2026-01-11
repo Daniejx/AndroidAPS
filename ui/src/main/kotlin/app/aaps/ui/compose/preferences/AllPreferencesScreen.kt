@@ -14,7 +14,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
@@ -36,6 +35,7 @@ import app.aaps.core.keys.StringKey
 import app.aaps.core.keys.interfaces.PreferenceVisibilityContext
 import app.aaps.core.keys.interfaces.Preferences
 import app.aaps.core.keys.interfaces.withEntries
+import app.aaps.core.ui.compose.AapsTopAppBar
 import app.aaps.core.ui.compose.preference.LocalCheckPassword
 import app.aaps.core.ui.compose.preference.LocalHashPassword
 import app.aaps.core.ui.compose.preference.LocalSnackbarHostState
@@ -216,7 +216,7 @@ fun AllPreferencesScreen(
         ProvidePreferenceTheme {
             Scaffold(
                 topBar = {
-                    TopAppBar(
+                    AapsTopAppBar(
                         title = {
                             Text(
                                 text = stringResource(app.aaps.core.ui.R.string.settings),

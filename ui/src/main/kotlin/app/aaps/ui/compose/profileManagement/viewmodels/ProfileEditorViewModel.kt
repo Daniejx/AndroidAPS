@@ -9,7 +9,6 @@ import app.aaps.core.interfaces.plugin.ActivePlugin
 import app.aaps.core.interfaces.profile.LocalProfileManager
 import app.aaps.core.interfaces.profile.ProfileErrorType
 import app.aaps.core.interfaces.profile.ProfileFunction
-import app.aaps.core.interfaces.profile.ProfileSource
 import app.aaps.core.interfaces.protection.ProtectionCheck
 import app.aaps.core.interfaces.resources.ResourceHelper
 import app.aaps.core.interfaces.rx.AapsSchedulers
@@ -340,7 +339,7 @@ class ProfileEditorViewModel @Inject constructor(
         disposable.clear()
     }
 
-    private fun ProfileSource.SingleProfile.toState(): SingleProfileState {
+    private fun LocalProfileManager.SingleProfile.toState(): SingleProfileState {
         return SingleProfileState(
             name = name,
             mgdl = mgdl,

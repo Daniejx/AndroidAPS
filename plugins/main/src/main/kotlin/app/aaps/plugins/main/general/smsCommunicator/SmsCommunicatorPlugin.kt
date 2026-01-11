@@ -37,6 +37,7 @@ import app.aaps.core.interfaces.notifications.Notification
 import app.aaps.core.interfaces.plugin.ActivePlugin
 import app.aaps.core.interfaces.plugin.PluginBaseWithPreferences
 import app.aaps.core.interfaces.plugin.PluginDescription
+import app.aaps.core.interfaces.profile.LocalProfileManager
 import app.aaps.core.interfaces.profile.ProfileFunction
 import app.aaps.core.interfaces.profile.ProfileUtil
 import app.aaps.core.interfaces.pump.DetailedBolusInfo
@@ -111,6 +112,7 @@ class SmsCommunicatorPlugin @Inject constructor(
     private val profileUtil: ProfileUtil,
     private val fabricPrivacy: FabricPrivacy,
     private val activePlugin: ActivePlugin,
+    private val localProfileManager: LocalProfileManager,
     private val commandQueue: CommandQueue,
     private val loop: Loop,
     private val iobCobCalculator: IobCobCalculator,
@@ -639,8 +641,7 @@ class SmsCommunicatorPlugin @Inject constructor(
     }
 
     private fun processPROFILE(divided: Array<String>, receivedSms: Sms) { // load profiles
-        val anInterface = activePlugin.activeProfileSource
-        val store = anInterface.profile
+        val store = localProfileManager.profile
         if (store == null) {
             sendSMS(Sms(receivedSms.phoneNumber, rh.gs(app.aaps.core.ui.R.string.notconfigured)))
             receivedSms.processed = true

@@ -6,6 +6,7 @@ import app.aaps.core.data.ue.Sources
 import app.aaps.core.data.ue.ValueWithUnit
 import app.aaps.core.interfaces.logging.LTag
 import app.aaps.core.interfaces.plugin.ActivePlugin
+import app.aaps.core.interfaces.profile.LocalProfileManager
 import app.aaps.core.interfaces.profile.ProfileFunction
 import app.aaps.core.interfaces.queue.Callback
 import app.aaps.core.interfaces.utils.DateUtil
@@ -21,10 +22,11 @@ import javax.inject.Inject
 class ActionProfileSwitch(injector: HasAndroidInjector) : Action(injector) {
 
     @Inject lateinit var activePlugin: ActivePlugin
+    @Inject lateinit var localProfileManager: LocalProfileManager
     @Inject lateinit var profileFunction: ProfileFunction
     @Inject lateinit var dateUtil: DateUtil
 
-    var inputProfileName: InputProfileName = InputProfileName(rh, activePlugin, "")
+    var inputProfileName: InputProfileName = InputProfileName(rh, localProfileManager, "")
 
     override fun friendlyName(): Int = R.string.profilename
     override fun shortDescription(): String = rh.gs(R.string.changengetoprofilename, inputProfileName.value)
@@ -48,7 +50,7 @@ class ActionProfileSwitch(injector: HasAndroidInjector) : Action(injector) {
             callback.result(pumpEnactResultProvider.get().success(true).comment(R.string.alreadyset)).run()
             return
         }
-        val profileStore = activePlugin.activeProfileSource.profile ?: return
+        val profileStore = localProfileManager.profile ?: return
         if (profileStore.getSpecificProfile(inputProfileName.value) == null) {
             aapsLogger.error(LTag.AUTOMATION, "Selected profile does not exist! - ${inputProfileName.value}")
             callback.result(pumpEnactResultProvider.get().success(false).comment(app.aaps.core.ui.R.string.notexists)).run()
@@ -93,5 +95,5 @@ class ActionProfileSwitch(injector: HasAndroidInjector) : Action(injector) {
         return this
     }
 
-    override fun isValid(): Boolean = activePlugin.activeProfileSource.profile?.getSpecificProfile(inputProfileName.value) != null
+    override fun isValid(): Boolean = localProfileManager.profile?.getSpecificProfile(inputProfileName.value) != null
 }

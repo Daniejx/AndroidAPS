@@ -5,6 +5,7 @@ import androidx.annotation.DrawableRes
 import app.aaps.core.interfaces.autotune.Autotune
 import app.aaps.core.interfaces.logging.LTag
 import app.aaps.core.interfaces.plugin.ActivePlugin
+import app.aaps.core.interfaces.profile.LocalProfileManager
 import app.aaps.core.interfaces.profile.ProfileFunction
 import app.aaps.core.interfaces.queue.Callback
 import app.aaps.core.interfaces.resources.ResourceHelper
@@ -29,10 +30,11 @@ class ActionRunAutotune(injector: HasAndroidInjector) : Action(injector) {
     @Inject lateinit var autotunePlugin: Autotune
     @Inject lateinit var profileFunction: ProfileFunction
     @Inject lateinit var activePlugin: ActivePlugin
+    @Inject lateinit var localProfileManager: LocalProfileManager
     @Inject lateinit var preferences: Preferences
 
     private var defaultValue = 0
-    private var inputProfileName = InputProfileName(rh, activePlugin, "", true)
+    private var inputProfileName = InputProfileName(rh, localProfileManager, "", true)
     private var daysBack = InputDuration(0, InputDuration.TimeUnit.DAYS)
     private val days = InputWeekDay().also { it.setAll(true) }
 

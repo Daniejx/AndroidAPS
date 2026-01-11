@@ -28,7 +28,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
@@ -36,7 +35,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -60,8 +58,10 @@ import androidx.compose.ui.util.lerp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.aaps.core.data.model.EPS
 import app.aaps.core.data.time.T
-import app.aaps.core.interfaces.profile.ProfileSource
+import app.aaps.core.interfaces.profile.LocalProfileManager
+import app.aaps.core.ui.compose.AapsFab
 import app.aaps.core.ui.compose.AapsTheme
+import app.aaps.core.ui.compose.AapsTopAppBar
 import app.aaps.core.ui.compose.OkCancelDialog
 import app.aaps.core.ui.compose.icons.ProfileSwitch
 import app.aaps.ui.R
@@ -78,7 +78,7 @@ import kotlin.math.absoluteValue
  * @param onEditProfile Callback when user wants to edit a profile (receives profile index)
  * @param onActivateProfile Callback when user wants to activate a profile (receives profile index)
  */
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun ProfileManagementScreen(
     viewModel: ProfileManagementViewModel,
@@ -136,7 +136,7 @@ fun ProfileManagementScreen(
     AapsTheme {
         Scaffold(
             topBar = {
-                TopAppBar(
+                AapsTopAppBar(
                     title = { Text(stringResource(app.aaps.core.ui.R.string.profile_management)) },
                     navigationIcon = {
                         IconButton(onClick = onNavigateBack) {
@@ -360,14 +360,12 @@ fun ProfileManagementScreen(
                     }
 
                     // FAB for primary action (Activate)
-                    FloatingActionButton(
-                        onClick = { onActivateProfile(currentPage) },
-                        containerColor = MaterialTheme.colorScheme.primaryContainer
+                    AapsFab(
+                        onClick = { onActivateProfile(currentPage) }
                     ) {
                         Icon(
                             imageVector = Icons.Filled.PlayArrow,
-                            contentDescription = stringResource(R.string.activate_label),
-                            tint = MaterialTheme.colorScheme.onPrimaryContainer
+                            contentDescription = stringResource(R.string.activate_label)
                         )
                     }
                 }
@@ -382,7 +380,7 @@ fun ProfileManagementScreen(
  */
 @Composable
 private fun ProfileCarouselCard(
-    profile: ProfileSource.SingleProfile?,
+    profile: LocalProfileManager.SingleProfile?,
     basalSum: Double,
     isActive: Boolean,
     hasErrors: Boolean,

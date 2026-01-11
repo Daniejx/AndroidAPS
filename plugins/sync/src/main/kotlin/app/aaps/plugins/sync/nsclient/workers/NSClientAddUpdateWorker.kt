@@ -17,6 +17,7 @@ import app.aaps.core.interfaces.configuration.Config
 import app.aaps.core.interfaces.logging.LTag
 import app.aaps.core.interfaces.nsclient.StoreDataForDb
 import app.aaps.core.interfaces.plugin.ActivePlugin
+import app.aaps.core.interfaces.profile.LocalProfileManager
 import app.aaps.core.interfaces.profile.ProfileUtil
 import app.aaps.core.interfaces.pump.VirtualPump
 import app.aaps.core.interfaces.utils.DateUtil
@@ -42,6 +43,7 @@ class NSClientAddUpdateWorker(
     @Inject lateinit var preferences: Preferences
     @Inject lateinit var dateUtil: DateUtil
     @Inject lateinit var activePlugin: ActivePlugin
+    @Inject lateinit var localProfileManager: LocalProfileManager
     @Inject lateinit var storeDataForDb: StoreDataForDb
     @Inject lateinit var profileUtil: ProfileUtil
 
@@ -143,7 +145,7 @@ class NSClientAddUpdateWorker(
 
                 eventType == TE.Type.PROFILE_SWITCH.text                          ->
                     if (preferences.get(BooleanKey.NsClientAcceptProfileSwitch) || config.AAPSCLIENT) {
-                        PS.fromJson(json, dateUtil, activePlugin)?.let { profileSwitch ->
+                        PS.fromJson(json, dateUtil, localProfileManager)?.let { profileSwitch ->
                             storeDataForDb.addToProfileSwitches(profileSwitch)
                         } ?: aapsLogger.error("Error parsing ProfileSwitch json $json")
                     }

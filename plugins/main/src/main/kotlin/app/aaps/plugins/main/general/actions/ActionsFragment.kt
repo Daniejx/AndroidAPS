@@ -18,6 +18,7 @@ import app.aaps.core.interfaces.iob.IobCobCalculator
 import app.aaps.core.interfaces.logging.AAPSLogger
 import app.aaps.core.interfaces.logging.UserEntryLogger
 import app.aaps.core.interfaces.plugin.ActivePlugin
+import app.aaps.core.interfaces.profile.LocalProfileManager
 import app.aaps.core.interfaces.profile.ProfileFunction
 import app.aaps.core.interfaces.protection.ProtectionCheck
 import app.aaps.core.interfaces.pump.actions.CustomAction
@@ -65,6 +66,7 @@ class ActionsFragment : DaggerFragment() {
     @Inject lateinit var statusLightHandler: StatusLightHandler
     @Inject lateinit var fabricPrivacy: FabricPrivacy
     @Inject lateinit var activePlugin: ActivePlugin
+    @Inject lateinit var localProfileManager: LocalProfileManager
     @Inject lateinit var iobCobCalculator: IobCobCalculator
     @Inject lateinit var processedTbrEbData: ProcessedTbrEbData
     @Inject lateinit var commandQueue: CommandQueue
@@ -234,7 +236,7 @@ class ActionsFragment : DaggerFragment() {
         val pump = activePlugin.activePump
 
         binding.profileSwitch.visibility = (
-            activePlugin.activeProfileSource.profile != null &&
+            localProfileManager.profile != null &&
                 pump.pumpDescription.isSetBasalProfileCapable &&
                 pump.isInitialized() &&
                 loop.runningMode != RM.Mode.DISCONNECTED_PUMP &&

@@ -13,6 +13,7 @@ import app.aaps.core.interfaces.constraints.Objectives
 import app.aaps.core.interfaces.maintenance.ImportExportPrefs
 import app.aaps.core.interfaces.plugin.ActivePlugin
 import app.aaps.core.interfaces.plugin.PluginBase
+import app.aaps.core.interfaces.profile.LocalProfileManager
 import app.aaps.core.interfaces.profile.ProfileFunction
 import app.aaps.core.interfaces.pump.Medtrum
 import app.aaps.core.interfaces.pump.OmnipodDash
@@ -69,6 +70,7 @@ class SWDefinition @Inject constructor(
     private val preferences: Preferences,
     private val profileFunction: ProfileFunction,
     private val activePlugin: ActivePlugin,
+    private val localProfileManager: LocalProfileManager,
     private val commandQueue: CommandQueue,
     private val importExportPrefs: ImportExportPrefs,
     private val androidPermission: AndroidPermission,
@@ -335,10 +337,9 @@ class SWDefinition @Inject constructor(
             .skippable(false)
             .add(swFragmentProvider.get().with((activePlugin.activeProfileSource as PluginBase).pluginDescription.fragmentClass!!))
             .validator {
-                activePlugin.activeProfileSource.profile?.getDefaultProfile()
+                localProfileManager.profile?.getDefaultProfile()
                     ?.let { ProfileSealed.Pure(it, activePlugin).isValid("StartupWizard", activePlugin.activePump, config, rh, rxBus, hardLimits, false).isValid } == true
             }
-            .visibility { (activePlugin.activeProfileSource as PluginBase).isEnabled() }
 
     private val screenProfileSwitch
         get() = swScreenProvider.get().with(app.aaps.core.ui.R.string.careportal_profileswitch)

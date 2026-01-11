@@ -15,7 +15,7 @@ import app.aaps.core.interfaces.notifications.Notification
 import app.aaps.core.interfaces.nsclient.NSClientMvvmRepository
 import app.aaps.core.interfaces.nsclient.StoreDataForDb
 import app.aaps.core.interfaces.plugin.ActivePlugin
-import app.aaps.core.interfaces.profile.ProfileSource
+import app.aaps.core.interfaces.profile.LocalProfileManager
 import app.aaps.core.interfaces.profile.ProfileStore
 import app.aaps.core.interfaces.rx.bus.RxBus
 import app.aaps.core.interfaces.rx.events.EventDismissNotification
@@ -67,10 +67,10 @@ class NsIncomingDataProcessor @Inject constructor(
     private val rxBus: RxBus,
     private val dateUtil: DateUtil,
     private val activePlugin: ActivePlugin,
+    private val localProfileManager: LocalProfileManager,
     private val storeDataForDb: StoreDataForDb,
     private val config: Config,
     private val profileStoreProvider: Provider<ProfileStore>,
-    private val profileSource: ProfileSource,
     private val uiInteraction: UiInteraction,
     private val nsClientMvvmRepository: NSClientMvvmRepository
 ) {
@@ -188,7 +188,7 @@ class NsIncomingDataProcessor @Inject constructor(
 
                     is NSProfileSwitch          ->
                         if (preferences.get(BooleanKey.NsClientAcceptProfileSwitch) || config.AAPSCLIENT || doFullSync) {
-                            treatment.toProfileSwitch(activePlugin, dateUtil)?.let { profileSwitch ->
+                            treatment.toProfileSwitch(localProfileManager, dateUtil)?.let { profileSwitch ->
                                 storeDataForDb.addToProfileSwitches(profileSwitch)
                             }
                         }
@@ -288,7 +288,7 @@ class NsIncomingDataProcessor @Inject constructor(
             val lastLocalChange = preferences.get(LongNonKey.LocalProfileLastChange)
             aapsLogger.debug(LTag.PROFILE, "Received profileStore: createdAt: $createdAt Local last modification: $lastLocalChange")
             if (createdAt > lastLocalChange || createdAt % 1000 == 0L) { // whole second means edited in NS
-                profileSource.loadFromStore(store)
+                localProfileManager.loadFromStore(store)
                 activePlugin.activeNsClient?.dataSyncSelector?.profileReceived(store.getStartDate())
                 aapsLogger.debug(LTag.PROFILE, "Received profileStore: $profileJson")
             }
