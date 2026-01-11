@@ -1,6 +1,9 @@
 package app.aaps.core.ui.compose
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.gestures.waitForUpOrCancellation
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -14,16 +17,20 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.delay
 import java.text.DecimalFormat
 import kotlin.math.roundToInt
 
@@ -68,7 +75,7 @@ fun SliderWithButtons(
         verticalAlignment = Alignment.CenterVertically
     ) {
         // Minus button
-        FilledTonalIconButton(
+        RepeatingIconButton(
             onClick = {
                 val newValue = roundToStep(value - step, step).coerceIn(minValue, maxValue)
                 onValueChange(newValue)
@@ -95,7 +102,7 @@ fun SliderWithButtons(
         )
 
         // Plus button
-        FilledTonalIconButton(
+        RepeatingIconButton(
             onClick = {
                 val newValue = roundToStep(value + step, step).coerceIn(minValue, maxValue)
                 onValueChange(newValue)
@@ -153,4 +160,50 @@ fun SliderWithButtons(
 
 private fun roundToStep(value: Double, step: Double): Double {
     return (value / step).roundToInt() * step
+}
+
+/**
+ * An icon button that repeats its onClick action while being held down.
+ * Speed increases progressively the longer the button is held.
+ */
+@Composable
+private fun RepeatingIconButton(
+    onClick: () -> Unit,
+    enabled: Boolean,
+    modifier: Modifier = Modifier,
+    initialDelayMs: Long = 500L,
+    maxDelayMs: Long = 200L,
+    minDelayMs: Long = 50L,
+    accelerationFactor: Float = 0.8f,
+    content: @Composable () -> Unit
+) {
+    var isPressed by remember { mutableStateOf(false) }
+    val currentOnClick by rememberUpdatedState(onClick)
+
+    LaunchedEffect(isPressed, enabled) {
+        if (isPressed && enabled) {
+            delay(initialDelayMs)
+            var currentDelay = maxDelayMs.toFloat()
+            while (isPressed && enabled) {
+                currentOnClick()
+                delay(currentDelay.toLong())
+                currentDelay = (currentDelay * accelerationFactor).coerceAtLeast(minDelayMs.toFloat())
+            }
+        }
+    }
+
+    FilledTonalIconButton(
+        onClick = onClick,
+        enabled = enabled,
+        modifier = modifier.pointerInput(Unit) {
+            awaitEachGesture {
+                awaitFirstDown(requireUnconsumed = false)
+                isPressed = true
+                waitForUpOrCancellation()
+                isPressed = false
+            }
+        }
+    ) {
+        content()
+    }
 }
